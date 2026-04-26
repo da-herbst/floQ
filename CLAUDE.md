@@ -14,8 +14,9 @@
 - **Debugging-Workflow**: 1) Reproduzieren, 2) Ursache analysieren, 3) Lösung vorschlagen, 4) Freigabe abwarten, 5) Umsetzen.
 - **Dedizierte Tools statt Bash**: `Glob`, `Grep`, `Read` bevorzugen. Bash-Befehle einzeln und sauber.
 - **Server-Inspektion**: Read-only Befehle auf dem Hetzner-Server (`ssh root@46.62.224.113 "..."` mit lesenden Befehlen — `docker ps`, `docker logs`, `cat`, `ls`, `psql -c "SELECT ..."`) sind ohne Freigabe erlaubt. Schreibende/destruktive Aktionen (`docker rm`, `rm`, `UPDATE/INSERT/DELETE`, `compose up/down`, Caddyfile-Edit) brauchen explizite Freigabe.
-- **Git-Standardprozedere**: Claude commitet selbständig, sobald eine logische Einheit fertig ist (saubere Gliederung, aussagekräftige Messages, deutsch). Änderungen an `CLAUDE.md` sind IMMER ein separater Commit. **Push und Deploy macht ausschließlich der Entwickler** — Claude pusht nie und deployt nie selbst.
-- **Deploy**: erfolgt über `scripts/deploy.sh` aus Rider heraus. SSH-Deploy-Schritte durch Claude sind tabu.
+- **Eiserne Regel — GitHub ist Source of Truth für Live**: Was nicht auf `origin/main` liegt, darf nicht auf floq.at laufen. Es gibt keinen Live-Stand, der nicht im Git nachvollziehbar ist.
+- **Git-Standardprozedere**: Claude commitet selbständig, sobald eine logische Einheit fertig ist (saubere Gliederung, aussagekräftige Messages, deutsch). Änderungen an `CLAUDE.md` sind IMMER ein separater Commit.
+- **Push & Deploy nur auf explizite Anweisung**: Claude pusht und deployt nicht von selbst. Auf explizites „push" oder „deploy" durch David führt Claude `scripts/deploy.sh` aus (Deploy zieht Push immer mit — beides in einem Rutsch). Der Entwickler kann denselben Befehl jederzeit selbst aus Rider auslösen.
 
 ## Architektur-Prinzipien
 
