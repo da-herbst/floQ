@@ -14,7 +14,8 @@
 - **Debugging-Workflow**: 1) Reproduzieren, 2) Ursache analysieren, 3) Lösung vorschlagen, 4) Freigabe abwarten, 5) Umsetzen.
 - **Dedizierte Tools statt Bash**: `Glob`, `Grep`, `Read` bevorzugen. Bash-Befehle einzeln und sauber.
 - **Server-Inspektion**: Read-only Befehle auf dem Hetzner-Server (`ssh root@46.62.224.113 "..."` mit lesenden Befehlen — `docker ps`, `docker logs`, `cat`, `ls`, `psql -c "SELECT ..."`) sind ohne Freigabe erlaubt. Schreibende/destruktive Aktionen (`docker rm`, `rm`, `UPDATE/INSERT/DELETE`, `compose up/down`, Caddyfile-Edit) brauchen explizite Freigabe.
-- **Git**: Commits sauber gegliedert (logische Einheiten, aussagekräftige Messages). Änderungen an `CLAUDE.md` sind IMMER ein separater Commit — nie mit Feature-/Bugfix-Commits mischen. Commits NUR nach expliziter Freigabe. NIEMALS pushen oder deployen — das macht der Entwickler.
+- **Git-Standardprozedere**: Claude commitet selbständig, sobald eine logische Einheit fertig ist (saubere Gliederung, aussagekräftige Messages, deutsch). Änderungen an `CLAUDE.md` sind IMMER ein separater Commit. **Push und Deploy macht ausschließlich der Entwickler** — Claude pusht nie und deployt nie selbst.
+- **Deploy**: erfolgt über `scripts/deploy.sh` aus Rider heraus. SSH-Deploy-Schritte durch Claude sind tabu.
 
 ## Architektur-Prinzipien
 
