@@ -1,0 +1,45 @@
+services:
+  floq:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "8083"
+    volumes:
+      - dataprotection_keys:/root/.aspnet/DataProtection-Keys
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=floq;Username=floq;Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD nicht gesetzt — siehe .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - default
+      - proxy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: floq
+      POSTGRES_USER: floq
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD nicht gesetzt — siehe .env}
+    expose:
+      - "5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U floq -d floq"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  dataprotection_keys:
+  postgres_data:

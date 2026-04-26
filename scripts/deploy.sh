@@ -83,6 +83,30 @@ if [ "${AHEAD}" -gt 0 ]; then
 fi
 
 # === 3) Deploy auf Server ===================================================
+step "Server: Pre-flight (.env)"
+
+ENV_CHECK="$(ssh -i "${SSH_KEY}" "${SERVER_HOST}" \
+  "test -s '${SERVER_PATH}/.env' && echo OK || echo MISSING")"
+if [ "${ENV_CHECK}" != "OK" ]; then
+  cat <<EOF
+${RED}✗ /opt/floq/.env fehlt oder ist leer auf dem Server.${RESET}
+
+Einmalig anlegen (ein starkes Passwort generieren und einsetzen):
+
+    ssh ${SERVER_HOST}
+    cd ${SERVER_PATH}
+    cat > .env <<'EOF2'
+POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d '/+=' | head -c 40)
+EOF2
+    chmod 600 .env
+
+Danach Deploy nochmal starten.
+EOF
+  exit 1
+fi
+ok ".env vorhanden"
+
+echo
 step "Server: Pull + Rebuild"
 
 ssh -i "${SSH_KEY}" -o StrictHostKeyChecking=accept-new "${SERVER_HOST}" \
