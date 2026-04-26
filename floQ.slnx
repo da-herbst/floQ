@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/floQ.Domain/floQ.Domain.csproj" />
+    <Project Path="src/floQ.Web/floQ.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/floQ.Tests/floQ.Tests.csproj" />
+  </Folder>
+</Solution>
