@@ -1,0 +1,49 @@
+@page "/auth/register"
+@model floQ.Web.Pages.Auth.RegisterModel
+@{
+    ViewData["Title"] = "Registrieren — floQ";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"]</title>
+    <link rel="icon" type="image/png" href="~/img/floQ_mark_black.png" />
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+</head>
+<body>
+    <main class="auth-shell">
+        <a href="/" class="brand">
+            <span class="wordmark">flo<span class="q">Q</span></span>
+        </a>
+
+        <h1>Registrieren</h1>
+        <p class="lead">Mit Passkey. Kein Passwort, keine Mail-Bestätigung.</p>
+
+        <form id="register-form" class="auth-form" novalidate>
+            <label>
+                <span>E-Mail</span>
+                <input type="email" name="email" id="email" required autocomplete="email" />
+            </label>
+            <label>
+                <span>Anzeigename</span>
+                <input type="text" name="displayName" id="displayName" required autocomplete="name" />
+            </label>
+            <label>
+                <span>Passkey-Bezeichnung</span>
+                <input type="text" name="credentialName" id="credentialName" placeholder="z.B. MacBook Touch ID" />
+            </label>
+            <button type="submit">Passkey erstellen</button>
+        </form>
+
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+
+        <p class="alt">Schon registriert? <a href="/auth/login">Anmelden</a></p>
+    </main>
+
+    <script src="~/js/webauthn.js" asp-append-version="true"></script>
+    <script src="~/js/register.js" asp-append-version="true"></script>
+</body>
+</html>

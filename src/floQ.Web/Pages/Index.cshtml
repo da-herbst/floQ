@@ -87,6 +87,18 @@
             <h1 class="wordmark">flo<span class="q">Q</span></h1>
             <p class="pron">[ˈflɔɐk]</p>
             <p class="claim">nur Cash is’ fesch</p>
+            <p style="margin-top:1.5rem;font-size:0.95rem;">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <span>Angemeldet als <strong>@User.Identity.Name</strong> · </span>
+                    <a href="/auth/logout" style="color:#B08D57;">Abmelden</a>
+                }
+                else
+                {
+                    <a href="/auth/login" style="color:#B08D57;text-decoration:none;margin-right:1rem;">Anmelden</a>
+                    <a href="/auth/register" style="color:#B08D57;text-decoration:none;">Registrieren</a>
+                }
+            </p>
         </div>
     </main>
     <footer>In Vorbereitung</footer>

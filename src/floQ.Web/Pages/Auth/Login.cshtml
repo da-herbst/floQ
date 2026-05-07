@@ -1,0 +1,41 @@
+@page "/auth/login"
+@model floQ.Web.Pages.Auth.LoginModel
+@{
+    ViewData["Title"] = "Anmelden — floQ";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"]</title>
+    <link rel="icon" type="image/png" href="~/img/floQ_mark_black.png" />
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+</head>
+<body>
+    <main class="auth-shell">
+        <a href="/" class="brand">
+            <span class="wordmark">flo<span class="q">Q</span></span>
+        </a>
+
+        <h1>Anmelden</h1>
+        <p class="lead">Mit Passkey. Touch ID, Windows Hello, YubiKey — was du registriert hast.</p>
+
+        <form id="login-form" class="auth-form" novalidate>
+            <label>
+                <span>E-Mail</span>
+                <input type="email" name="email" id="email" required autocomplete="username webauthn" />
+            </label>
+            <button type="submit">Anmelden</button>
+        </form>
+
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+
+        <p class="alt">Noch kein Konto? <a href="/auth/register">Registrieren</a></p>
+    </main>
+
+    <script src="~/js/webauthn.js" asp-append-version="true"></script>
+    <script src="~/js/login.js" asp-append-version="true"></script>
+</body>
+</html>
