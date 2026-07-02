@@ -103,6 +103,13 @@ builder.Services.AddFido2(options =>
 
 builder.Services.AddScoped<IPasskeyService, PasskeyService>();
 
+// E-Mail-Einmalcode als Passkey-Fallback/Recovery. System-SMTP aus
+// Section "SystemMail" (Passwort per ENV); unkonfiguriert loggt Dev den Code.
+builder.Services.Configure<SystemMailOptions>(
+    builder.Configuration.GetSection(SystemMailOptions.SectionName));
+builder.Services.AddSingleton<SystemMailer>();
+builder.Services.AddScoped<LoginCodeService>();
+
 // Beleg-Engine (Port des batOS-DocumentEngine-Letztstands).
 builder.Services.AddScoped<IDocumentEngine, DocumentEngine>();
 

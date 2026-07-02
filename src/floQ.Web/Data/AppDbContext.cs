@@ -35,6 +35,7 @@ public class AppDbContext(
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<UserTenant> UserTenants => Set<UserTenant>();
     public DbSet<PasskeyCredential> PasskeyCredentials => Set<PasskeyCredential>();
+    public DbSet<LoginCode> LoginCodes => Set<LoginCode>();
 
     // Tenant-Schicht (auto-isoliert)
     public DbSet<CompanyProfile> CompanyProfiles => Set<CompanyProfile>();
@@ -95,6 +96,14 @@ public class AppDbContext(
             b.HasOne(p => p.User).WithMany().HasForeignKey(p => p.UserId).OnDelete(DeleteBehavior.Cascade);
             b.HasIndex(p => p.CredentialId).IsUnique();
             b.Property(p => p.Name).HasMaxLength(128);
+        });
+
+        modelBuilder.Entity<LoginCode>(b =>
+        {
+            b.HasKey(c => c.Id);
+            b.Property(c => c.CodeHash).HasMaxLength(64);
+            b.HasOne<User>().WithMany().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(c => c.UserId);
         });
 
         // ---- Tenant-Schicht ----

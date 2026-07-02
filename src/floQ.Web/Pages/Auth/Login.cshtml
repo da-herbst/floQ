@@ -30,12 +30,23 @@
             <button type="submit">Anmelden</button>
         </form>
 
+        <form id="code-form" class="auth-form" novalidate hidden>
+            <label>
+                <span>Anmeldecode</span>
+                <input type="text" name="code" id="code" inputmode="numeric" pattern="[0-9]{6}"
+                       maxlength="6" placeholder="6-stelliger Code" autocomplete="one-time-code" />
+            </label>
+            <button type="submit">Mit Code anmelden</button>
+        </form>
+
         <div id="status" class="status" role="status" aria-live="polite"></div>
 
+        <p class="alt"><a href="#" id="code-toggle">Kein Passkey zur Hand? Code per E-Mail anfordern</a></p>
         <p class="alt">Noch kein Konto? <a href="/auth/register">Registrieren</a></p>
     </main>
 
     <script src="~/js/webauthn.js" asp-append-version="true"></script>
     <script src="~/js/login.js" asp-append-version="true"></script>
+    <script src="~/js/login-code.js" asp-append-version="true"></script>
 </body>
 </html>
