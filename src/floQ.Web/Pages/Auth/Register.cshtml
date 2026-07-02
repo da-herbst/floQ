@@ -1,7 +1,7 @@
 @page "/auth/register"
 @model floQ.Web.Pages.Auth.RegisterModel
 @{
-    ViewData["Title"] = "Registrieren — floQ";
+    ViewData["Title"] = "Registrieren — floq";
     Layout = null;
 }
 <!DOCTYPE html>
@@ -10,37 +10,40 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"]</title>
-    <link rel="icon" type="image/png" href="~/img/floQ_mark_black.png" />
-    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <link rel="icon" type="image/png" href="~/img/hand-black.png" />
+    <link rel="stylesheet" href="~/css/floq.css" asp-append-version="true" />
 </head>
 <body>
-    <main class="auth-shell">
-        <a href="/" class="brand">
-            <span class="wordmark">flo<span class="q">Q</span></span>
-        </a>
+    <main class="center-page">
+        <div class="auth-shell">
+            <a href="/" class="auth-brand">
+                <img src="~/img/hand-black.png" alt="" />
+                <span>floq</span>
+            </a>
 
-        <h1>Registrieren</h1>
-        <p class="lead">Mit Passkey. Kein Passwort, keine Mail-Bestätigung.</p>
+            <h1 class="auth-title">Registrieren</h1>
+            <p class="auth-lead">Ein Passkey statt Passwort — dein Gerät übernimmt das.</p>
 
-        <form id="register-form" class="auth-form" novalidate>
-            <label>
-                <span>E-Mail</span>
-                <input type="email" name="email" id="email" required autocomplete="email" />
-            </label>
-            <label>
-                <span>Anzeigename</span>
-                <input type="text" name="displayName" id="displayName" required autocomplete="name" />
-            </label>
-            <label>
-                <span>Passkey-Bezeichnung</span>
-                <input type="text" name="credentialName" id="credentialName" placeholder="z.B. MacBook Touch ID" />
-            </label>
-            <button type="submit">Passkey erstellen</button>
-        </form>
+            <form id="register-form" class="auth-form" novalidate>
+                <div class="field">
+                    <label for="email">E-Mail</label>
+                    <input type="email" name="email" id="email" required autocomplete="email" />
+                </div>
+                <div class="field">
+                    <label for="displayName">Anzeigename</label>
+                    <input type="text" name="displayName" id="displayName" required autocomplete="name" />
+                </div>
+                <div class="field">
+                    <label for="credentialName">Passkey-Bezeichnung</label>
+                    <input type="text" name="credentialName" id="credentialName" placeholder="z. B. MacBook Touch ID" />
+                </div>
+                <button class="btn btn-primary" type="submit">Passkey erstellen</button>
+            </form>
 
-        <div id="status" class="status" role="status" aria-live="polite"></div>
+            <div id="status" class="auth-status" role="status" aria-live="polite"></div>
 
-        <p class="alt">Schon registriert? <a href="/auth/login">Anmelden</a></p>
+            <p class="auth-alt" style="margin-top:52px">Schon dabei? <a href="/auth/login">Anmelden</a></p>
+        </div>
     </main>
 
     <script src="~/js/webauthn.js" asp-append-version="true"></script>

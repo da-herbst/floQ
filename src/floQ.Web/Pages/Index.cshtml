@@ -1,7 +1,7 @@
 @page
 @model IndexModel
 @{
-    ViewData["Title"] = "floQ — nur Cash is’ fesch";
+    ViewData["Title"] = "floq — nur Cash is’ fesch";
     Layout = null;
 }
 <!DOCTYPE html>
@@ -9,99 +9,33 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="floQ — Verrechnung. Unaufgeregt." />
-    <title>floQ — nur Cash is’ fesch</title>
-    <link rel="icon" type="image/png" href="~/img/floQ_mark_black.png" />
-    <link rel="apple-touch-icon" href="~/img/floQ_mark_black.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100%; }
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-            background: #FAF7F2;
-            color: #1A1A1A;
-            display: grid;
-            grid-template-rows: 1fr auto;
-            min-height: 100vh;
-            padding: 2rem;
-        }
-        main {
-            display: grid;
-            place-items: center;
-            text-align: center;
-        }
-        .lockup {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.25rem;
-        }
-        .mark {
-            width: clamp(120px, 18vw, 200px);
-            height: clamp(120px, 18vw, 200px);
-            background-color: #1A1A1A;
-            -webkit-mask: url("/img/floQ_mark_mask.png") center / contain no-repeat;
-                    mask: url("/img/floQ_mark_mask.png") center / contain no-repeat;
-        }
-        .wordmark {
-            font-size: clamp(3rem, 9vw, 5.5rem);
-            font-weight: 800;
-            letter-spacing: -0.045em;
-            line-height: 1;
-            color: #1A1A1A;
-        }
-        .wordmark .q { color: #B08D57; }
-        .pron {
-            font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-            font-size: clamp(0.85rem, 1.4vw, 1rem);
-            color: #999;
-            letter-spacing: 0.05em;
-            margin-top: -0.4rem;
-        }
-        .claim {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-weight: 500;
-            font-size: clamp(1.25rem, 2.5vw, 1.75rem);
-            color: #6b6b6b;
-            margin-top: 0.5rem;
-            letter-spacing: 0.005em;
-        }
-        footer {
-            text-align: center;
-            font-size: 0.75rem;
-            color: #999;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            padding: 1rem 0;
-        }
-    </style>
+    <meta name="description" content="floq — Verrechnung. Unaufgeregt." />
+    <title>floq — nur Cash is’ fesch</title>
+    <link rel="icon" type="image/png" href="~/img/hand-black.png" />
+    <link rel="apple-touch-icon" href="~/img/hand-black.png" />
+    <link rel="stylesheet" href="~/css/floq.css" asp-append-version="true" />
 </head>
 <body>
-    <main>
+    <main class="center-page">
         <div class="lockup">
-            <div class="mark" aria-hidden="true"></div>
-            <h1 class="wordmark">flo<span class="q">Q</span></h1>
-            <p class="pron">[ˈflɔɐk]</p>
-            <p class="claim">nur Cash is’ fesch</p>
-            <p style="margin-top:1.5rem;font-size:0.95rem;">
+            <img class="lockup-mark" src="~/img/hand-black.png" alt="floq" />
+            <div class="lockup-word">floq</div>
+            <div class="lockup-ipa">[ˈflɔɐk]</div>
+            <div class="lockup-claim">nur Cash is’ fesch</div>
+            <div class="lockup-actions">
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <a href="/Billing" style="color:#B08D57;text-decoration:none;margin-right:1rem;font-weight:700;">Zur App</a>
-                    <span>Angemeldet als <strong>@User.Identity.Name</strong> · </span>
-                    <a href="/auth/logout" style="color:#B08D57;">Abmelden</a>
+                    <a class="primary" href="/Billing">Zur App</a>
+                    <a href="/auth/logout">Angemeldet als @User.Identity.Name · Abmelden</a>
                 }
                 else
                 {
-                    <a href="/auth/login" style="color:#B08D57;text-decoration:none;margin-right:1rem;">Anmelden</a>
-                    <a href="/auth/register" style="color:#B08D57;text-decoration:none;">Registrieren</a>
+                    <a class="primary" href="/auth/login">Anmelden</a>
+                    <a href="/auth/register">Registrieren</a>
                 }
-            </p>
+            </div>
         </div>
+        <div class="page-foot">In Vorbereitung</div>
     </main>
-    <footer>In Vorbereitung</footer>
 </body>
 </html>

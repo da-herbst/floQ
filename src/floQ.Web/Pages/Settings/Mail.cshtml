@@ -18,32 +18,28 @@
 </div>
 
 <div class="two-col">
-    <div class="card">
-        <div class="card-header"><div class="card-title">SMTP-Zugang</div></div>
-        <div class="card-body form-grid">
-            <div class="field"><label>Host *</label><input id="fHost" placeholder="smtp.example.at" /></div>
-            <div class="field"><label>Port</label><input id="fPort" type="number" value="587" min="1" max="65535" /></div>
-            <div class="field span-2"><label>Benutzername</label><input id="fUserName" /></div>
-            <div class="field span-2"><label>Passwort <span class="t-muted" id="pwHint"></span></label><input id="fPassword" type="password" autocomplete="new-password" placeholder="••••••••" /></div>
+    <div>
+        <div class="sb-heading">SMTP-Zugang</div>
+        <div class="form-grid cols-21 block-body">
+            <div class="field mono"><label>Host *</label><input id="fHost" placeholder="smtp.example.at" /></div>
+            <div class="field mono"><label>Port</label><input id="fPort" type="number" value="587" min="1" max="65535" /></div>
+            <div class="field"><label>Benutzername</label><input id="fUserName" /></div>
+            <div class="field"><label>Passwort <span id="pwHint" style="text-transform:none;letter-spacing:0;color:var(--muted)"></span></label><input id="fPassword" type="password" autocomplete="new-password" placeholder="••••••••" /></div>
             <div class="field"><label>Absender-Adresse (From) *</label><input id="fSender" type="email" placeholder="office@deinefirma.at" /></div>
             <div class="field"><label>Absender-Anzeigename</label><input id="fSenderDisplayName" placeholder="leer = Firmenname" /></div>
         </div>
     </div>
 
     <aside>
-        <div class="card card-body">
-            <div class="sb-heading">Hinweise</div>
-            <div class="t-sm t-muted" style="line-height:1.6">
-                Port 465 = implizites SSL, Port 587 = STARTTLS.<br /><br />
-                Das Passwort wird verschlüsselt gespeichert und nie wieder angezeigt —
-                zum Ändern einfach neu eintragen.<br /><br />
-                „Test-Mail senden" schickt eine Probe-Mail an die Absender-Adresse.
-            </div>
+        <div class="sb-heading">Hinweise</div>
+        <div style="padding-top:6px">
+            <div class="note-item">Port 465 = implizites SSL, Port 587 = STARTTLS. Im Zweifel 587.</div>
+            <div class="note-item">Das Passwort wird verschlüsselt gespeichert und nie wieder angezeigt — zum Ändern einfach neu eintragen.</div>
+            <div class="note-item">„Test-Mail senden" schickt eine Probe-Mail an die Absender-Adresse.</div>
         </div>
-        <div class="card card-body">
-            <div class="sb-heading">Weitere Einstellungen</div>
-            <a class="btn btn-secondary btn-sm" href="/Settings/CompanyProfile">Firmenprofil</a>
-        </div>
+
+        <div class="sb-heading" style="margin-top:28px">Weitere Einstellungen</div>
+        <div style="padding-top:14px">← <a class="aside-link" href="/Settings/CompanyProfile">Firmenprofil</a></div>
     </aside>
 </div>
 

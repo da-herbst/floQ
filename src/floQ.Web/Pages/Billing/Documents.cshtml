@@ -11,30 +11,26 @@
         <div class="page-title">Belege</div>
         <div class="page-sub"><span id="countShown">0</span> von <span id="countTotal">0</span></div>
     </div>
-    <button class="btn btn-primary" id="btnNewDocument">+ Neuer Beleg</button>
+    <button class="btn btn-primary" id="btnNewDocument">+&nbsp;&nbsp;Neuer Beleg</button>
 </div>
 
 <div class="two-col">
-    <div class="card">
-        <div class="ent-list" id="docList">
-            <div class="ent-empty">Lädt …</div>
-        </div>
+    <div class="ent-list topline" id="docList">
+        <div class="ent-empty">Lädt …</div>
     </div>
 
     <aside>
-        <div class="card card-body">
-            <div class="sb-heading">Status</div>
-            <div class="pill-group" id="statusPills"></div>
-        </div>
-        <div class="card card-body">
-            <div class="sb-heading">Belegart</div>
-            <div class="pill-group" id="typePills"></div>
-        </div>
-        <div class="card card-body">
-            <div class="sb-heading">Ergebnis</div>
-            <div class="meta-row"><span class="meta-label">Belege</span><span class="meta-value" id="sumCount">0</span></div>
-            <div class="meta-row"><span class="meta-label">Entwürfe</span><span class="meta-value" id="sumDrafts">0</span></div>
-            <div class="meta-row"><span class="meta-label">Σ Brutto</span><span class="meta-value num" id="sumGross">–</span></div>
+        <div class="sb-heading">Status</div>
+        <div class="filter-list" id="statusPills"></div>
+
+        <div class="sb-heading" style="margin-top:28px">Belegart</div>
+        <div class="filter-list" id="typePills"></div>
+
+        <div class="sb-heading" style="margin-top:28px">Ergebnis</div>
+        <div class="meta-list">
+            <div class="meta-row"><span>Belege</span><span class="meta-value" id="sumCount">0</span></div>
+            <div class="meta-row"><span>Entwürfe</span><span class="meta-value" id="sumDrafts">0</span></div>
+            <div class="meta-row"><span>Σ Brutto</span><span class="meta-value" id="sumGross">–</span></div>
         </div>
     </aside>
 </div>
@@ -43,23 +39,20 @@
 <div class="modal-scrim" id="newDocModal" hidden>
     <div class="modal">
         <div class="modal-header">
-            <div>
-                <div class="modal-eyebrow">Neuer Beleg</div>
-                <div class="modal-title">Belegtyp wählen</div>
-            </div>
-            <button class="modal-close" type="button" data-modal-close>×</button>
+            <div class="modal-eyebrow">Neuer Beleg</div>
+            <div class="modal-title">Belegtyp wählen</div>
         </div>
-        <div class="modal-body">
-            <div class="type-targets">
-                <button class="type-target" type="button" data-new-type="2"><span class="ent-code">RE</span><span>Rechnung</span></button>
-                <button class="type-target" type="button" data-new-type="1"><span class="ent-code">AN</span><span>Angebot</span></button>
-                <button class="type-target" type="button" data-new-type="3"><span class="ent-code">GS</span><span>Gutschrift</span></button>
-                <button class="type-target" type="button" data-new-type="4"><span class="ent-code">SR</span><span>Stornorechnung</span></button>
-                <button class="type-target" type="button" data-new-type="5"><span class="ent-code">MA</span><span>Mahnung</span></button>
+        <div class="modal-body pick">
+            <div class="pick-list">
+                <button class="pick-item" type="button" data-new-type="2"><span class="pi-code">RE</span><span class="pi-label">Rechnung</span></button>
+                <button class="pick-item" type="button" data-new-type="1"><span class="pi-code">AN</span><span class="pi-label">Angebot</span></button>
+                <button class="pick-item" type="button" data-new-type="3"><span class="pi-code">GS</span><span class="pi-label">Gutschrift</span><span class="pi-hint">wählt Originalrechnung</span></button>
+                <button class="pick-item" type="button" data-new-type="4"><span class="pi-code">SR</span><span class="pi-label">Stornorechnung</span><span class="pi-hint">wählt Originalrechnung</span></button>
+                <button class="pick-item" type="button" data-new-type="5"><span class="pi-code">MA</span><span class="pi-label">Mahnung</span><span class="pi-hint">wählt Originalrechnung</span></button>
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" type="button" data-modal-close>Abbrechen</button>
+            <button class="btn-text" type="button" data-modal-close>Abbrechen</button>
         </div>
     </div>
 </div>
