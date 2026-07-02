@@ -10,7 +10,7 @@
     width: 794px;
     margin: 0 auto;
     background: #ffffff;
-    color: #1d1d1f;
+    color: #111111;
     line-height: 1.5;
 }
 
@@ -84,7 +84,7 @@
 
 /* Summenblock: Abschlusslinie + nie über Seiten splitten */
 .doc-flow .doc-totals {
-    border-top: 1px solid #1d1d1f;
+    border-top: 1px solid #111111;
     break-inside: avoid;
     page-break-inside: avoid;
 }
@@ -94,7 +94,7 @@
 
 /* ── Meta-Tabelle (rechts) ─────────────────────────────────── */
 .meta-label {
-    color: #86868b;
+    color: #8A8A86;
     padding-right: 12px;
     text-align: left;
 }
@@ -113,7 +113,7 @@
 
 .doc-items-table thead th {
     font-weight: 500;
-    border-bottom: 1px solid #1d1d1f;
+    border-bottom: 1px solid #111111;
     padding: 4px 8px 6px;
 }
 
@@ -123,7 +123,7 @@
 }
 
 .doc-items-table tbody tr:last-child td {
-    border-bottom: 1px solid #1d1d1f;
+    border-bottom: 1px solid #111111;
 }
 
 .col-pos { width: 6%; }
@@ -142,13 +142,13 @@
 /* ── Rabatt-Subzeilen ─────────────────────────────────────── */
 .doc-items-table .discount-row td {
     font-size: 0.85em;
-    color: #6e6e73;
+    color: #55554F;
     padding-top: 1px;
     padding-bottom: 1px;
 }
 
 .discount-prefix {
-    color: #86868b;
+    color: #8A8A86;
     margin-right: 3px;
 }
 
@@ -165,7 +165,7 @@
 
 .doc-totals-gross {
     font-weight: 700;
-    border-top: 1px solid #1d1d1f;
+    border-top: 1px solid #111111;
     padding-top: 4px;
     margin-top: 2px;
 }
