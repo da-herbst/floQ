@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700&amp;family=Newsreader:ital,opsz,wght@1,6..72,400&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body { margin: 0; background: #E9E9E7; }
+</style>
+</helmet>
+
+<section data-screen-label="floq UI" style="padding: 56px 64px 140px 64px; font-family: 'Hanken Grotesk', sans-serif; color: #111; display: flex; flex-direction: column; align-items: flex-start;">
+
+  <div style="display: flex; align-items: baseline; gap: 20px;">
+    <div style="font-weight: 600; font-size: 22px; letter-spacing: -0.01em;">floq — UI, Phase 1</div>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86;">schwarz-weiß · hairlines statt boxen · status = zeichen, nicht farbe</div>
+  </div>
+
+  <!-- ================================ TOKENS ================================ -->
+  <div id="tokens" data-screen-label="System" style="width: 1440px; margin-top: 48px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8A8A86; margin-bottom: 10px;">§6 SYSTEM</div>
+    <div style="background: #fff; border: 1px solid #D9D9D7; padding: 48px 56px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 56px;">
+      <div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">FARBE</div>
+        <div style="display: flex; margin-top: 16px; border: 1px solid #E5E5E3;">
+          <div style="flex: 1; height: 44px; background: #111;"></div>
+          <div style="flex: 1; height: 44px; background: #55554F;"></div>
+          <div style="flex: 1; height: 44px; background: #9A9A96;"></div>
+          <div style="flex: 1; height: 44px; background: #E5E5E3;"></div>
+          <div style="flex: 1; height: 44px; background: #F6F6F4;"></div>
+          <div style="flex: 1; height: 44px; background: #FFF;"></div>
+        </div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #55554F; line-height: 2; margin-top: 12px;">--ink #111 · --ink-2 #55554F<br>--muted #9A9A96 · --line #E5E5E3<br>--fill #F6F6F4 · --card #FFF<br>keine Statusfarben. kein Gold. nichts.</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; margin-top: 32px;">STATUS = ZEICHEN</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 2.3; margin-top: 12px; color: #111;">○&nbsp;&nbsp;ENTWURF<br>●&nbsp;&nbsp;ABGESCHLOSSEN<br>➔&nbsp;&nbsp;VERSENDET<br>◐&nbsp;&nbsp;GESEHEN<br><span style="text-decoration: line-through;">✕&nbsp;&nbsp;STORNIERT</span></div>
+      </div>
+      <div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">TYPOGRAFIE</div>
+        <div style="margin-top: 18px; display: flex; flex-direction: column; gap: 16px;">
+          <div style="font-size: 30px; font-weight: 500; letter-spacing: -0.02em;">Titel 30 / 500</div>
+          <div style="font-size: 15px; font-weight: 600;">Zwischentitel 15 / 600</div>
+          <div style="font-size: 14.5px; color: #33332F; line-height: 1.55;">Text 14,5 / 400 — Empfänger wird direkt in den Beleg getippt, kein Kundenstamm nötig.</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">LABEL 11 MONO VERSAL</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px;">1.234,56 € — Zahlen mono</div>
+          <div style="font-family: 'Newsreader', serif; font-style: italic; font-size: 17px; color: #55554F;">Newsreader italic — nur für den Schmäh</div>
+        </div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; margin-top: 30px;">GEOMETRIE</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #55554F; line-height: 2; margin-top: 12px;">radius 0 · keine schatten · hairline 1px<br>spacing 8/16/24/40/64 · content 1280px</div>
+      </div>
+      <div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">ELEMENTE</div>
+        <div style="display: flex; gap: 12px; margin-top: 18px;">
+          <div style="height: 42px; padding: 0 22px; background: #111; color: #fff; font-weight: 600; font-size: 14px; display: flex; align-items: center;">Abschließen</div>
+          <div style="height: 42px; padding: 0 22px; border: 1px solid #111; font-weight: 600; font-size: 14px; display: flex; align-items: center;">Speichern</div>
+          <div style="height: 42px; display: flex; align-items: center; font-size: 14px; color: #55554F; text-decoration: underline; text-underline-offset: 3px;">Entwurf verwerfen</div>
+        </div>
+        <div style="max-width: 320px; margin-top: 28px;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">E-MAIL</div>
+          <div style="border-bottom: 1px solid #111; padding: 8px 0 7px; font-size: 15px;">anna@leitner-consulting.at</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; margin-top: 18px;">PLZ</div>
+          <div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-size: 15px; color: #9A9A96;">1010</div>
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #CACAC6; padding: 9px 0; margin-top: 22px; font-size: 14px;"><span>Fehler-Zeile</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em;">! PFLICHTFELD</span></div>
+        </div>
+        <div style="display: flex; gap: 24px; margin-top: 28px; border-bottom: 1px solid #E5E5E3;">
+          <div style="padding-bottom: 9px; border-bottom: 2px solid #111; font-weight: 600; font-size: 14px;">Positionen</div>
+          <div style="padding-bottom: 9px; font-size: 14px; color: #8A8A86;">Empfänger</div>
+          <div style="padding-bottom: 9px; font-size: 14px; color: #8A8A86;">Details</div>
+        </div>
+        <div style="display: flex; gap: 18px; margin-top: 24px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">
+          <span style="border-bottom: 1px solid #111; padding-bottom: 2px;">● ABGESCHLOSSEN 12</span>
+          <span style="color: #9A9A96;">○ ENTWURF 3</span>
+        </div>
+        <div style="margin-top: 28px; background: #111; color: #fff; font-size: 13.5px; padding: 12px 18px; display: inline-block;">Beleg abgeschlossen — Nummer 2026-11-0007 gezogen.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================ LANDING ================================ -->
+  <div id="landing" data-screen-label="Landing" style="width: 1440px; margin-top: 64px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8A8A86; margin-bottom: 10px;">§4.1 LANDING /</div>
+    <div style="background: #fff; border: 1px solid #D9D9D7; min-height: 760px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+      <img src="assets/hand-black.png" alt="floq" style="width: 104px; height: auto;">
+      <div style="font-weight: 600; font-size: 72px; line-height: 1; letter-spacing: -0.02em; margin-top: 44px;">floq</div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #9A9A96; letter-spacing: 0.06em; margin-top: 22px;">[ˈflɔɐk]</div>
+      <div style="font-family: 'Newsreader', serif; font-style: italic; font-size: 23px; color: #33332F; margin-top: 12px;">nur Cash is’ fesch</div>
+      <div style="display: flex; gap: 32px; margin-top: 56px; font-size: 15px;">
+        <div style="border-bottom: 1px solid #111; padding-bottom: 3px; font-weight: 600;">Anmelden</div>
+        <div style="color: #8A8A86; padding-bottom: 3px;">Registrieren</div>
+      </div>
+      <div style="position: absolute; bottom: 30px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.22em; color: #B4B4B0;">IN VORBEREITUNG</div>
+    </div>
+  </div>
+
+  <!-- ================================ AUTH ================================ -->
+  <div id="auth" data-screen-label="Auth" style="width: 1440px; margin-top: 64px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8A8A86; margin-bottom: 10px;">§4.2 AUTH — NUR PASSKEY</div>
+    <div style="display: flex; gap: 40px;">
+      <div style="flex: 1; background: #fff; border: 1px solid #D9D9D7; display: flex; justify-content: center; padding: 88px 0 104px;">
+        <div style="width: 340px;">
+          <div style="display: flex; align-items: center; gap: 10px;"><img src="assets/hand-black.png" alt="" style="width: 22px; height: auto;"><span style="font-weight: 600; font-size: 17px;">floq</span></div>
+          <div style="font-size: 30px; font-weight: 500; letter-spacing: -0.02em; margin-top: 56px;">Anmelden</div>
+          <div style="font-size: 14.5px; color: #55554F; line-height: 1.55; margin-top: 10px;">Mit Passkey. Touch ID, Windows Hello, YubiKey — was du registriert hast.</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; margin-top: 44px;">E-MAIL</div>
+          <div style="border-bottom: 1px solid #111; padding: 9px 0 8px; font-size: 15.5px;">anna@leitner-consulting.at</div>
+          <div style="height: 46px; background: #111; color: #fff; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; margin-top: 32px;">Mit Passkey anmelden</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.08em; color: #8A8A86; margin-top: 18px;">WARTE AUF PASSKEY …</div>
+          <div style="font-size: 14px; color: #55524C; margin-top: 52px;">Noch kein Konto? <span style="color: #111; border-bottom: 1px solid #111; padding-bottom: 1px;">Registrieren</span></div>
+        </div>
+      </div>
+      <div style="flex: 1; background: #fff; border: 1px solid #D9D9D7; display: flex; justify-content: center; padding: 88px 0 104px;">
+        <div style="width: 340px;">
+          <div style="display: flex; align-items: center; gap: 10px;"><img src="assets/hand-black.png" alt="" style="width: 22px; height: auto;"><span style="font-weight: 600; font-size: 17px;">floq</span></div>
+          <div style="font-size: 30px; font-weight: 500; letter-spacing: -0.02em; margin-top: 56px;">Registrieren</div>
+          <div style="font-size: 14.5px; color: #55554F; line-height: 1.55; margin-top: 10px;">Ein Passkey statt Passwort — dein Gerät übernimmt das.</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; margin-top: 44px;">E-MAIL</div>
+          <div style="border-bottom: 1px solid #CACAC6; padding: 9px 0 8px; font-size: 15.5px; color: #9A9A96;">du@beispiel.at</div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 26px;"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">ANZEIGENAME</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; color: #111;">! PFLICHTFELD</span></div>
+          <div style="border-bottom: 1px solid #111; padding: 9px 0 8px; font-size: 15.5px;">&nbsp;</div>
+          <div style="height: 46px; background: #111; color: #fff; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; margin-top: 32px;">Passkey erstellen</div>
+          <div style="font-size: 14px; color: #55524C; margin-top: 52px;">Schon dabei? <span style="color: #111; border-bottom: 1px solid #111; padding-bottom: 1px;">Anmelden</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================ DASHBOARD ================================ -->
+  <div id="dashboard" data-screen-label="Dashboard" style="width: 1440px; margin-top: 64px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8A8A86; margin-bottom: 10px;">§4.3 /BILLING — ÜBERSICHT</div>
+    <div style="background: #fff; border: 1px solid #D9D9D7;">
+      <div style="height: 60px; border-bottom: 1px solid #E5E5E3; display: flex; align-items: center; justify-content: space-between; padding: 0 80px;">
+        <div style="display: flex; align-items: center; gap: 10px;"><img src="assets/hand-black.png" alt="" style="width: 20px; height: auto;"><span style="font-weight: 600; font-size: 17px;">floq</span></div>
+        <div style="display: flex; gap: 32px; font-size: 14.5px;">
+          <div style="font-weight: 600; border-bottom: 2px solid #111; padding: 18px 0 16px;">Übersicht</div>
+          <div style="color: #8A8A86; padding: 18px 0;">Belege</div>
+          <div style="color: #8A8A86; padding: 18px 0;">Einstellungen</div>
+        </div>
+        <div style="display: flex; gap: 20px; font-size: 14px; align-items: center;"><span>Anna Leitner</span><span style="color: #8A8A86; text-decoration: underline; text-underline-offset: 3px;">Abmelden</span></div>
+      </div>
+      <div style="max-width: 1280px; margin: 0 auto; padding: 56px 0 96px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div style="font-size: 30px; font-weight: 500; letter-spacing: -0.02em;">Übersicht</div>
+            <div style="font-size: 14px; color: #8A8A86; margin-top: 6px;">Mittwoch, 02. Juli 2026</div>
+          </div>
+          <div style="height: 44px; padding: 0 24px; background: #111; color: #fff; font-weight: 600; font-size: 14.5px; display: flex; align-items: center;">+&nbsp;&nbsp;Neue Rechnung</div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid #111; margin-top: 40px;">
+          <div style="padding: 28px 32px 32px 0;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">ENTWÜRFE</div>
+            <div style="font-size: 44px; font-weight: 300; letter-spacing: -0.02em; margin-top: 14px;">3</div>
+            <div style="font-size: 13.5px; color: #55554F; margin-top: 4px;">in Bearbeitung</div>
+          </div>
+          <div style="padding: 28px 32px; border-left: 1px solid #E5E5E3;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">OFFENE FORDERUNGEN</div>
+            <div style="font-size: 44px; font-weight: 300; letter-spacing: -0.02em; margin-top: 14px;">4.180,50&thinsp;€</div>
+            <div style="font-size: 13.5px; color: #55554F; margin-top: 4px;">5 Rechnungen</div>
+          </div>
+          <div style="padding: 28px 32px; border-left: 1px solid #E5E5E3;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">ÜBERFÄLLIG</div>
+            <div style="font-size: 44px; font-weight: 500; letter-spacing: -0.02em; margin-top: 14px; text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px;">2</div>
+            <div style="font-size: 13.5px; color: #111; font-weight: 600; margin-top: 8px;">1.485,00&thinsp;€</div>
+          </div>
+          <div style="padding: 28px 0 32px 32px; border-left: 1px solid #E5E5E3;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">UMSATZ 2026</div>
+            <div style="font-size: 44px; font-weight: 300; letter-spacing: -0.02em; margin-top: 14px;">28.640&thinsp;€</div>
+            <div style="font-size: 13.5px; color: #55554F; margin-top: 4px;">abgeschlossene Rechnungen</div>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 64px; margin-top: 64px; align-items: start;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #111; padding-bottom: 12px;">
+              <div style="display: flex; align-items: baseline; gap: 14px;"><span style="font-size: 15px; font-weight: 600;">Überfällige Rechnungen</span><span style="font-size: 13px; color: #8A8A86;">nach Fälligkeit</span></div>
+              <span style="font-size: 13.5px; text-decoration: underline; text-underline-offset: 3px;">Alle Belege</span>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 16px; padding: 16px 0; border-bottom: 1px solid #E5E5E3;">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86;">RE</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px;">2026-11-0002</span>
+              <span style="font-size: 14px; color: #55554F;">Muster &amp; Söhne GmbH · fällig 14.06.2026</span>
+              <span style="flex: 1;"></span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 500;">990,00&thinsp;€</span>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 16px; padding: 16px 0; border-bottom: 1px solid #E5E5E3;">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86;">RE</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px;">2026-11-0004</span>
+              <span style="font-size: 14px; color: #55554F;">Bäckerei Steiner · fällig 21.06.2026</span>
+              <span style="flex: 1;"></span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 500;">495,00&thinsp;€</span>
+            </div>
+            <div style="font-family: 'Newsreader', serif; font-style: italic; font-size: 15px; color: #9A9A96; padding: 18px 0;">— sonst nichts überfällig, sehr fesch.</div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #111; padding-bottom: 12px;">
+              <span style="font-size: 15px; font-weight: 600;">Zuletzt bearbeitet</span>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 14px; padding: 16px 0; border-bottom: 1px solid #E5E5E3;">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86;">RE</span>
+              <div style="flex: 1;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px;">Entwurf</div><div style="font-size: 13px; color: #8A8A86; margin-top: 2px;">Wegscheider KG · 02.07.2026</div></div>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #9A9A96;">○</span>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 14px; padding: 16px 0; border-bottom: 1px solid #E5E5E3;">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86;">AN</span>
+              <div style="flex: 1;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px;">2026-11-0006</div><div style="font-size: 13px; color: #8A8A86; margin-top: 2px;">Dr. Petra Aigner · 30.06.2026</div></div>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px;">➔</span>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 14px; padding: 16px 0; border-bottom: 1px solid #E5E5E3;">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86;">RE</span>
+              <div style="flex: 1;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px;">2026-11-0003</div><div style="font-size: 13px; color: #8A8A86; margin-top: 2px;">Muster &amp; Söhne GmbH · 28.06.2026</div></div>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px;">●</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================ BELEGLISTE ================================ -->
+  <div id="belege" data-screen-label="Belegliste" style="width: 1440px; margin-top: 64px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8A8A86; margin-bottom: 10px;">§4.4 /BILLING/DOCUMENTS — BELEGLISTE</div>
+    <div style="background: #fff; border: 1px solid #D9D9D7;">
+      <div style="height: 60px; border-bottom: 1px solid #E5E5E3; display: flex; align-items: center; justify-content: space-between; padding: 0 80px;">
+        <div style="display: flex; align-items: center; gap: 10px;"><img src="assets/hand-black.png" alt="" style="width: 20px; height: auto;"><span style="font-weight: 600; font-size: 17px;">floq</span></div>
+        <div style="display: flex; gap: 32px; font-size: 14.5px;">
+          <div style="color: #8A8A86; padding: 18px 0;">Übersicht</div>
+          <div style="font-weight: 600; border-bottom: 2px solid #111; padding: 18px 0 16px;">Belege</div>
+          <div style="color: #8A8A86; padding: 18px 0;">Einstellungen</div>
+        </div>
+        <div style="display: flex; gap: 20px; font-size: 14px; align-items: center;"><span>Anna Leitner</span><span style="color: #8A8A86; text-decoration: underline; text-underline-offset: 3px;">Abmelden</span></div>
+      </div>
+      <div style="max-width: 1280px; margin: 0 auto; padding: 56px 0 96px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div style="font-size: 30px; font-weight: 500; letter-spacing: -0.02em;">Belege</div>
+            <div style="font-size: 14px; color: #8A8A86; margin-top: 6px;">7 von 21</div>
+          </div>
+          <div style="height: 44px; padding: 0 24px; background: #111; color: #fff; font-weight: 600; font-size: 14.5px; display: flex; align-items: center;">+&nbsp;&nbsp;Neuer Beleg</div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 300px; gap: 64px; margin-top: 40px; align-items: start;">
+          <div>
+            <div style="border-top: 1px solid #111;"></div>
+            <div style="display: flex; align-items: center; gap: 18px; padding: 18px 0; border-bottom: 1px solid #E5E5E3;">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86; width: 24px;">RE</span>
+              <div style="width: 240px;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 14.5px; font-weight: 500;">Entwurf</div><div style="font-size: 13px; color: #8A8A86; margin-top: 3px;">Rechnung · 02.07.2026 · LZ 06/2026</div></div>
+              <span style="font-size: 14px; color: #33332F;">Wegscheider KG</span>
+              <span style="flex: 1;"></span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #55554F;">○ ENTWURF</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #B4B4B0; width: 110px; text-align: right;">0,00&thinsp;€</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 18px; padding: 18px 0; border-bottom: 1px solid #E5E5E3;">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86; width: 24px;">RE</span>
+              <div style="width: 240px;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 14.5px; font-weight: 500;">2026-11-0005</div><div style="font-size: 13px; color: #8A8A86; margin-top: 3px;">Rechnung · 28.06.2026 · LZ 05–06/2026</div></div>
+              <span style="font-size: 14px; color: #33332F;">Muster &amp; Söhne GmbH</span>
+              <span style="flex: 1;"></span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em;">◐ GESEHEN</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; width: 110px; text-align: right;">1.705,50&thinsp;€</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 18px; padding: 18px 0; border-bottom: 1px solid #E5E5E3;">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86; width: 24px;">AN</span>
+              <div style="width: 240px;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 14.5px; font-weight: 500;">2026-11-0006</div><div style="font-size: 13px; color: #8A8A86; margin-top: 3px;">Angebot · 30.06.2026 · gültig bis 31.07.2026</div></div>
+              <span style="font-size: 14px; color: #33332F;">Dr. Petra Aigner</span>
+              <span style="flex: 1;"></span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em;">➔ VERSENDET</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; width: 110px; text-align: right;">2.640,00&thinsp;€</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 18px; padding: 18px 0; border-bottom: 1px solid #E5E5E3;">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86; width: 24px;">RE</span>
+              <div style="width: 240px;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 14.5px; font-weight: 500;">2026-11-0003</div><div style="font-size: 13px; color: #8A8A86; margin-top: 3px;">Rechnung · 28.06.2026 · LZ 06/2026</div></div>
+              <span style="font-size: 14px; color: #33332F;">Muster &amp; Söhne GmbH</span>
+              <span style="flex: 1;"></span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em;">● ABGESCHLOSSEN</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; width: 110px; text-align: right;">405,00&thinsp;€</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 18px; padding: 18px 0; border-bottom: 1px solid #E5E5E3;">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86; width: 24px;">GS</span>
+              <div style="width: 240px;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 14.5px; font-weight: 500;">2026-11-0001</div><div style="font-size: 13px; color: #8A8A86; margin-top: 3px;">Gutschrift · 12.06.2026</div></div>
+              <span style="font-size: 14px; color: #33332F;">Bäckerei Steiner</span>
+              <span style="flex: 1;"></span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8A8A86; text-decoration: line-through;">✕ STORNIERT</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; width: 110px; text-align: right; color: #8A8A86;">−120,00&thinsp;€</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px;">STATUS</div>
+            <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">
+              <div style="display: flex; justify-content: space-between;"><span style="border-bottom: 1px solid #111; padding-bottom: 2px;">○ ENTWURF</span><span>3</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="border-bottom: 1px solid #111; padding-bottom: 2px;">● ABGESCHLOSSEN</span><span>2</span></div>
+              <div style="display: flex; justify-content: space-between; color: #9A9A96;"><span>➔ VERSENDET</span><span>1</span></div>
+              <div style="display: flex; justify-content: space-between; color: #9A9A96;"><span>◐ GESEHEN</span><span>1</span></div>
+              <div style="display: flex; justify-content: space-between; color: #9A9A96;"><span>✕ STORNIERT</span><span>1</span></div>
+            </div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px; margin-top: 28px;">BELEGART</div>
+            <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">
+              <div style="display: flex; justify-content: space-between;"><span style="border-bottom: 1px solid #111; padding-bottom: 2px;">RE RECHNUNG</span><span>4</span></div>
+              <div style="display: flex; justify-content: space-between; color: #9A9A96;"><span>AN ANGEBOT</span><span>1</span></div>
+              <div style="display: flex; justify-content: space-between; color: #9A9A96;"><span>GS GUTSCHRIFT</span><span>1</span></div>
+              <div style="display: flex; justify-content: space-between; color: #9A9A96;"><span>MA MAHNUNG</span><span>1</span></div>
+            </div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px; margin-top: 28px;">ERGEBNIS</div>
+            <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px 0; font-size: 13.5px; color: #55554F;">
+              <div style="display: flex; justify-content: space-between;"><span>Belege</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #111;">7</span></div>
+              <div style="display: flex; justify-content: space-between;"><span>Entwürfe</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #111;">3</span></div>
+              <div style="display: flex; justify-content: space-between;"><span>Σ Brutto</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #111;">4.630,50&thinsp;€</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================ WORKBENCH ENTWURF ================================ -->
+  <div id="workbench" data-screen-label="Workbench Entwurf" style="width: 1440px; margin-top: 64px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8A8A86; margin-bottom: 10px;">§4.5 /BILLING/DOCUMENT — WORKBENCH · ZUSTAND ENTWURF · TAB POSITIONEN</div>
+    <div style="background: #fff; border: 1px solid #D9D9D7;">
+      <div style="height: 60px; border-bottom: 1px solid #E5E5E3; display: flex; align-items: center; justify-content: space-between; padding: 0 80px;">
+        <div style="display: flex; align-items: center; gap: 10px;"><img src="assets/hand-black.png" alt="" style="width: 20px; height: auto;"><span style="font-weight: 600; font-size: 17px;">floq</span></div>
+        <div style="display: flex; gap: 32px; font-size: 14.5px;">
+          <div style="color: #8A8A86; padding: 18px 0;">Übersicht</div>
+          <div style="font-weight: 600; border-bottom: 2px solid #111; padding: 18px 0 16px;">Belege</div>
+          <div style="color: #8A8A86; padding: 18px 0;">Einstellungen</div>
+        </div>
+        <div style="display: flex; gap: 20px; font-size: 14px; align-items: center;"><span>Anna Leitner</span><span style="color: #8A8A86; text-decoration: underline; text-underline-offset: 3px;">Abmelden</span></div>
+      </div>
+      <div style="max-width: 1280px; margin: 0 auto; padding: 56px 0 96px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div style="display: flex; align-items: baseline; gap: 16px;"><span style="font-size: 30px; font-weight: 500; letter-spacing: -0.02em;">Rechnung</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #9A9A96;">○ Entwurf</span></div>
+            <div style="font-size: 14px; color: #8A8A86; margin-top: 6px;">Nummer beim Abschluss: <span style="font-family: 'IBM Plex Mono', monospace; color: #55554F;">2026-11-0007</span></div>
+          </div>
+          <span style="font-size: 14px; text-decoration: underline; text-underline-offset: 3px; color: #55554F;">Zur Liste</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 300px; gap: 64px; margin-top: 36px; align-items: start;">
+          <div>
+            <div style="display: flex; gap: 28px; border-bottom: 1px solid #E5E5E3;">
+              <div style="padding-bottom: 11px; font-size: 14.5px; color: #8A8A86;">Empfänger</div>
+              <div style="padding-bottom: 11px; font-size: 14.5px; font-weight: 600; border-bottom: 2px solid #111;">Positionen</div>
+              <div style="padding-bottom: 11px; font-size: 14.5px; color: #8A8A86;">Details</div>
+              <div style="padding-bottom: 11px; font-size: 14.5px; color: #8A8A86;">Vorschau</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 32px;">
+              <span style="font-size: 15px; font-weight: 600;">Positionen</span>
+              <span style="font-size: 13.5px; text-decoration: underline; text-underline-offset: 3px;">+ Position</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 70px 70px 110px 60px 110px 60px; gap: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.12em; color: #999; border-bottom: 1px solid #111; padding: 14px 0 10px; margin-top: 8px;">
+              <span>BEZEICHNUNG</span><span style="text-align: right;">MENGE</span><span>EINHEIT</span><span style="text-align: right;">EINZELPREIS</span><span style="text-align: right;">UST</span><span style="text-align: right;">NETTO</span><span></span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 70px 70px 110px 60px 110px 60px; gap: 12px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid #E5E5E3; font-size: 14.5px;">
+              <span style="border-bottom: 1px solid #CACAC6; padding-bottom: 6px;">Konzeption &amp; Beratung</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; text-align: right; border-bottom: 1px solid #CACAC6; padding-bottom: 6px;">12</span>
+              <span style="border-bottom: 1px solid #CACAC6; padding-bottom: 6px; font-size: 13.5px;">Std.</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; text-align: right; border-bottom: 1px solid #CACAC6; padding-bottom: 6px;">110,00</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; text-align: right; border-bottom: 1px solid #CACAC6; padding-bottom: 6px;">20</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; text-align: right; color: #55554F;">1.320,00</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86; text-align: right;">%&nbsp;&nbsp;✕</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 70px 70px 110px 60px 110px 60px; gap: 12px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid #E5E5E3; font-size: 13.5px; color: #55554F;">
+              <span style="padding-left: 28px;">• Treuerabatt 10 %</span>
+              <span></span><span></span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; text-align: right;">−132,00</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; text-align: right;">20</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; text-align: right;">−132,00</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86; text-align: right;">✕</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 70px 70px 110px 60px 110px 60px; gap: 12px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid #E5E5E3; font-size: 14.5px;">
+              <span style="border-bottom: 1px solid #CACAC6; padding-bottom: 6px;">Fahrtkosten pauschal</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; text-align: right; border-bottom: 1px solid #CACAC6; padding-bottom: 6px;">1</span>
+              <span style="border-bottom: 1px solid #CACAC6; padding-bottom: 6px; font-size: 13.5px;">Psch.</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; text-align: right; border-bottom: 1px solid #CACAC6; padding-bottom: 6px;">80,00</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; text-align: right; border-bottom: 1px solid #CACAC6; padding-bottom: 6px;">20</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; text-align: right; color: #55554F;">80,00</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86; text-align: right;">%&nbsp;&nbsp;✕</span>
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 28px;">
+              <div style="width: 340px;">
+                <div style="display: flex; justify-content: space-between; font-size: 14px; color: #55554F; padding: 6px 0;"><span>Gesamtbetrag netto</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13.5px;">1.268,00&thinsp;€</span></div>
+                <div style="display: flex; justify-content: space-between; font-size: 14px; color: #55554F; padding: 6px 0;"><span>zzgl. Umsatzsteuer 20 %</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13.5px;">253,60&thinsp;€</span></div>
+                <div style="display: flex; justify-content: space-between; font-size: 15.5px; font-weight: 600; border-top: 1px solid #111; margin-top: 8px; padding-top: 10px;"><span>Gesamtbetrag brutto</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px;">1.521,60&thinsp;€</span></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px;">STATUS</div>
+            <div style="padding: 16px 0; display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; color: #55554F;">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.1em; color: #111;">○ ENTWURF</div>
+              <div style="display: flex; justify-content: space-between;"><span>Nummer</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #111;">folgt</span></div>
+              <div style="display: flex; justify-content: space-between;"><span>Brutto</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #111;">1.521,60&thinsp;€</span></div>
+            </div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px; margin-top: 24px;">AKTIONEN</div>
+            <div style="display: flex; flex-direction: column; gap: 12px; padding-top: 18px;">
+              <div style="height: 44px; background: #111; color: #fff; font-weight: 600; font-size: 14.5px; display: flex; align-items: center; justify-content: center;">Abschließen</div>
+              <div style="height: 44px; border: 1px solid #111; font-weight: 600; font-size: 14.5px; display: flex; align-items: center; justify-content: center;">Speichern</div>
+              <div style="font-size: 13.5px; color: #55554F; text-decoration: underline; text-underline-offset: 3px; text-align: center; padding-top: 6px;">Entwurf verwerfen</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================ WORKBENCH ABGESCHLOSSEN ================================ -->
+  <div id="workbench2" data-screen-label="Workbench Abgeschlossen" style="width: 1440px; margin-top: 64px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8A8A86; margin-bottom: 10px;">§4.5 WORKBENCH · ZUSTAND ABGESCHLOSSEN · TAB VORSCHAU · VERSAND + ZAHLUNGEN</div>
+    <div style="background: #fff; border: 1px solid #D9D9D7;">
+      <div style="height: 60px; border-bottom: 1px solid #E5E5E3; display: flex; align-items: center; justify-content: space-between; padding: 0 80px;">
+        <div style="display: flex; align-items: center; gap: 10px;"><img src="assets/hand-black.png" alt="" style="width: 20px; height: auto;"><span style="font-weight: 600; font-size: 17px;">floq</span></div>
+        <div style="display: flex; gap: 32px; font-size: 14.5px;">
+          <div style="color: #8A8A86; padding: 18px 0;">Übersicht</div>
+          <div style="font-weight: 600; border-bottom: 2px solid #111; padding: 18px 0 16px;">Belege</div>
+          <div style="color: #8A8A86; padding: 18px 0;">Einstellungen</div>
+        </div>
+        <div style="display: flex; gap: 20px; font-size: 14px; align-items: center;"><span>Anna Leitner</span><span style="color: #8A8A86; text-decoration: underline; text-underline-offset: 3px;">Abmelden</span></div>
+      </div>
+      <div style="max-width: 1280px; margin: 0 auto; padding: 56px 0 96px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div style="display: flex; align-items: baseline; gap: 16px;"><span style="font-size: 30px; font-weight: 500; letter-spacing: -0.02em;">Rechnung 2026-11-0003</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px;">●</span></div>
+            <div style="font-size: 14px; color: #8A8A86; margin-top: 6px;">Rechnung vom 28.06.2026 · Formulare gesperrt</div>
+          </div>
+          <span style="font-size: 14px; text-decoration: underline; text-underline-offset: 3px; color: #55554F;">Zur Liste</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 300px; gap: 64px; margin-top: 36px; align-items: start;">
+          <div>
+            <div style="display: flex; gap: 28px; border-bottom: 1px solid #E5E5E3;">
+              <div style="padding-bottom: 11px; font-size: 14.5px; color: #8A8A86;">Empfänger</div>
+              <div style="padding-bottom: 11px; font-size: 14.5px; color: #8A8A86;">Positionen</div>
+              <div style="padding-bottom: 11px; font-size: 14.5px; color: #8A8A86;">Details</div>
+              <div style="padding-bottom: 11px; font-size: 14.5px; font-weight: 600; border-bottom: 2px solid #111;">Vorschau</div>
+            </div>
+            <div style="margin-top: 28px; background: #55554F; padding: 36px 0; display: flex; justify-content: center; position: relative;">
+              <div style="width: 480px; aspect-ratio: 210 / 297; background: #fff; padding: 44px 40px; box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between;">
+                  <div style="font-size: 8px; color: #9A9A96; border-bottom: 0.5px solid #CACAC6; padding-bottom: 2px; align-self: flex-start;">Leitner Consulting e.U. · Praterstraße 12/4 · 1020 Wien</div>
+                  <div style="font-size: 8px; color: #55554F; text-align: right; line-height: 1.8;">Nummer&nbsp;&nbsp;<span style="color: #111;">2026-11-0003</span><br>Datum&nbsp;&nbsp;&nbsp;<span style="color: #111;">28.06.2026</span><br>UID&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #111;">ATU 634 218 77</span></div>
+                </div>
+                <div style="font-size: 9.5px; margin-top: 14px; line-height: 1.6;">Muster &amp; Söhne GmbH<br>Hauptplatz 3<br>8010 Graz</div>
+                <div style="font-size: 14px; font-weight: 700; margin-top: 28px;">Rechnung</div>
+                <div style="border-top: 0.5px solid #111; margin-top: 12px; padding-top: 6px; font-size: 8px; color: #55554F; display: flex; justify-content: space-between;"><span>Pos. · Bezeichnung</span><span>Netto</span></div>
+                <div style="font-size: 8.5px; display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 0.5px solid #E5E5E3;"><span>1 · Konzeption &amp; Beratung, 3 Std.</span><span>330,00</span></div>
+                <div style="font-size: 8.5px; display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 0.5px solid #E5E5E3;"><span>2 · Dokumentation</span><span>7,50</span></div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 10px;"><div style="width: 55%; font-size: 8.5px;"><div style="display: flex; justify-content: space-between; padding: 2px 0;"><span>Gesamtbetrag netto</span><span>337,50</span></div><div style="display: flex; justify-content: space-between; padding: 2px 0;"><span>zzgl. Umsatzsteuer 20 %</span><span>67,50</span></div><div style="display: flex; justify-content: space-between; font-weight: 700; border-top: 0.5px solid #111; margin-top: 3px; padding-top: 3px;"><span>Gesamtbetrag brutto</span><span>405,00 €</span></div></div></div>
+                <div style="position: absolute;"></div>
+              </div>
+              <div style="position: absolute; bottom: 12px; right: 16px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.12em; color: #CACAC6;">PDF-IFRAME · A4 · ~78VH</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px;">STATUS</div>
+            <div style="padding: 16px 0; display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; color: #55554F;">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.1em; color: #111;">● ABGESCHLOSSEN</div>
+              <div style="display: flex; justify-content: space-between;"><span>Nummer</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #111;">2026-11-0003</span></div>
+              <div style="display: flex; justify-content: space-between;"><span>Brutto</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #111;">405,00&thinsp;€</span></div>
+            </div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px; margin-top: 24px;">AKTIONEN</div>
+            <div style="display: flex; flex-direction: column; gap: 12px; padding-top: 18px;">
+              <div style="height: 44px; background: #111; color: #fff; font-weight: 600; font-size: 14.5px; display: flex; align-items: center; justify-content: center;">Versenden</div>
+              <div style="height: 44px; border: 1px solid #111; font-weight: 600; font-size: 14.5px; display: flex; align-items: center; justify-content: center;">PDF herunterladen</div>
+              <div style="height: 44px; border: 1px solid #CACAC6; color: #33332F; font-weight: 600; font-size: 14.5px; display: flex; align-items: center; justify-content: center;">Weiterverarbeiten</div>
+              <div style="font-size: 13.5px; color: #55554F; text-decoration: underline; text-underline-offset: 3px; text-align: center; padding-top: 6px;">Entsperren</div>
+            </div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px; margin-top: 28px;">VERSAND</div>
+            <div style="padding: 14px 0; border-bottom: 1px solid #E5E5E3;">
+              <div style="font-size: 14px; font-weight: 600;">office@muster-soehne.at</div>
+              <div style="font-size: 12.5px; color: #8A8A86; margin-top: 4px; line-height: 1.6;">gesendet 28.06. · Link · geöffnet ×2 · geladen ×1</div>
+            </div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px; margin-top: 28px;">ZAHLUNGEN</div>
+            <div style="padding: 14px 0; border-bottom: 1px solid #E5E5E3; display: flex; justify-content: space-between; align-items: baseline;">
+              <div><div style="font-size: 13.5px;">01.07.2026 · Überweisung</div></div>
+              <div style="display: flex; gap: 12px; align-items: baseline;"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px;">200,00&thinsp;€</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86;">✕</span></div>
+            </div>
+            <div style="font-size: 13.5px; text-decoration: underline; text-underline-offset: 3px; padding-top: 14px;">+ Zahlung erfassen</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================ MODALS ================================ -->
+  <div id="modals" data-screen-label="Modals" style="width: 1440px; margin-top: 64px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8A8A86; margin-bottom: 10px;">§4.4/4.5 MODALS · TOAST · BESTÄTIGUNG</div>
+    <div style="background: #55554F; border: 1px solid #D9D9D7; padding: 72px 0; display: flex; justify-content: center; gap: 48px; align-items: flex-start; flex-wrap: wrap;">
+      <div style="width: 400px; background: #fff;">
+        <div style="padding: 28px 32px 0;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.16em; color: #999;">NEUER BELEG</div>
+          <div style="font-size: 21px; font-weight: 600; margin-top: 8px;">Belegtyp wählen</div>
+        </div>
+        <div style="padding: 20px 32px 32px; display: flex; flex-direction: column;">
+          <div style="display: flex; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid #E5E5E3;"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86;">RE</span><span style="font-size: 15px; font-weight: 600;">Rechnung</span></div>
+          <div style="display: flex; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid #E5E5E3;"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86;">AN</span><span style="font-size: 15px; font-weight: 600;">Angebot</span></div>
+          <div style="display: flex; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid #E5E5E3;"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86;">GS</span><span style="font-size: 15px; font-weight: 600;">Gutschrift</span><span style="flex: 1;"></span><span style="font-size: 12px; color: #9A9A96;">wählt Originalrechnung</span></div>
+          <div style="display: flex; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid #E5E5E3;"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86;">SR</span><span style="font-size: 15px; font-weight: 600;">Stornorechnung</span><span style="flex: 1;"></span><span style="font-size: 12px; color: #9A9A96;">wählt Originalrechnung</span></div>
+          <div style="display: flex; align-items: baseline; gap: 16px; padding: 14px 0;"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8A86;">MA</span><span style="font-size: 15px; font-weight: 600;">Mahnung</span><span style="flex: 1;"></span><span style="font-size: 12px; color: #9A9A96;">wählt Originalrechnung</span></div>
+        </div>
+      </div>
+      <div style="width: 440px; background: #fff;">
+        <div style="padding: 28px 32px 0;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.16em; color: #999;">RECHNUNG 2026-11-0003</div>
+          <div style="font-size: 21px; font-weight: 600; margin-top: 8px;">Beleg versenden</div>
+        </div>
+        <div style="padding: 24px 32px 0;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">EMPFÄNGER *</div>
+          <div style="border-bottom: 1px solid #111; padding: 8px 0 7px; font-size: 15px;">office@muster-soehne.at</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; margin-top: 22px;">PERSÖNLICHE NACHRICHT</div>
+          <div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 26px; font-size: 15px; color: #9A9A96;">Optional — steht über dem Dokument-Link.</div>
+          <div style="display: flex; align-items: center; gap: 12px; margin-top: 24px; font-size: 14px;"><span style="width: 16px; height: 16px; border: 1px solid #111; display: inline-block;"></span>PDF als Datei-Anhang statt Ansichts-Link</div>
+          <div style="display: flex; align-items: center; gap: 12px; margin-top: 12px; font-size: 14px;"><span style="width: 16px; height: 16px; border: 1px solid #111; background: #111; color: #fff; font-size: 11px; display: inline-flex; align-items: center; justify-content: center;">✓</span>Kopie an mich (office@leitner-consulting.at)</div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 24px; align-items: center; padding: 28px 32px 30px;">
+          <span style="font-size: 14px; color: #55554F; text-decoration: underline; text-underline-offset: 3px;">Abbrechen</span>
+          <div style="height: 42px; padding: 0 26px; background: #111; color: #fff; font-weight: 600; font-size: 14px; display: flex; align-items: center;">Senden</div>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 48px;">
+        <div style="width: 380px; background: #fff;">
+          <div style="padding: 28px 32px;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.16em; color: #999;">ABSCHLIESSEN</div>
+            <div style="font-size: 19px; font-weight: 600; margin-top: 8px; line-height: 1.35;">Nummer 2026-11-0007 wird gezogen.</div>
+            <div style="font-size: 14px; color: #55554F; line-height: 1.55; margin-top: 10px;">Danach ist der Beleg gesperrt und die Nummer vergeben — das lässt sich nicht rückgängig machen.</div>
+            <div style="display: flex; justify-content: flex-end; gap: 24px; align-items: center; margin-top: 28px;">
+              <span style="font-size: 14px; color: #55554F; text-decoration: underline; text-underline-offset: 3px;">Abbrechen</span>
+              <div style="height: 42px; padding: 0 24px; background: #111; color: #fff; font-weight: 600; font-size: 14px; display: flex; align-items: center;">Abschließen</div>
+            </div>
+          </div>
+        </div>
+        <div style="width: 380px; background: #fff;">
+          <div style="padding: 28px 32px;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.16em; color: #999;">ZAHLUNG ERFASSEN</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 18px;">
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">BETRAG € *</div><div style="border-bottom: 1px solid #111; padding: 8px 0 7px; font-family: 'IBM Plex Mono', monospace; font-size: 14px;">205,00</div></div>
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">ZAHLDATUM *</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-family: 'IBM Plex Mono', monospace; font-size: 14px;">02.07.2026</div></div>
+            </div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; margin-top: 20px;">ZAHLUNGSWEG</div>
+            <div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-size: 14.5px; display: flex; justify-content: space-between;"><span>Überweisung</span><span style="color: #9A9A96;">▾</span></div>
+            <div style="display: flex; justify-content: flex-end; gap: 24px; align-items: center; margin-top: 26px;">
+              <span style="font-size: 14px; color: #55554F; text-decoration: underline; text-underline-offset: 3px;">Abbrechen</span>
+              <div style="height: 42px; padding: 0 24px; background: #111; color: #fff; font-weight: 600; font-size: 14px; display: flex; align-items: center;">Erfassen</div>
+            </div>
+          </div>
+        </div>
+        <div style="background: #111; color: #fff; font-size: 13.5px; padding: 13px 20px; align-self: center;">Beleg versendet an office@muster-soehne.at</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================ SETTINGS PROFIL ================================ -->
+  <div id="profil" data-screen-label="Firmenprofil" style="width: 1440px; margin-top: 64px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8A8A86; margin-bottom: 10px;">§4.6 /SETTINGS/COMPANYPROFILE — FIRMENPROFIL</div>
+    <div style="background: #fff; border: 1px solid #D9D9D7;">
+      <div style="height: 60px; border-bottom: 1px solid #E5E5E3; display: flex; align-items: center; justify-content: space-between; padding: 0 80px;">
+        <div style="display: flex; align-items: center; gap: 10px;"><img src="assets/hand-black.png" alt="" style="width: 20px; height: auto;"><span style="font-weight: 600; font-size: 17px;">floq</span></div>
+        <div style="display: flex; gap: 32px; font-size: 14.5px;">
+          <div style="color: #8A8A86; padding: 18px 0;">Übersicht</div>
+          <div style="color: #8A8A86; padding: 18px 0;">Belege</div>
+          <div style="font-weight: 600; border-bottom: 2px solid #111; padding: 18px 0 16px;">Einstellungen</div>
+        </div>
+        <div style="display: flex; gap: 20px; font-size: 14px; align-items: center;"><span>Anna Leitner</span><span style="color: #8A8A86; text-decoration: underline; text-underline-offset: 3px;">Abmelden</span></div>
+      </div>
+      <div style="max-width: 1280px; margin: 0 auto; padding: 56px 0 96px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div style="font-size: 30px; font-weight: 500; letter-spacing: -0.02em;">Firmenprofil</div>
+            <div style="font-size: 14px; color: #8A8A86; margin-top: 6px;">Absender, Footer und Briefpapier deiner Belege — dein Kunde sieht ausschließlich diesen Brand.</div>
+          </div>
+          <div style="height: 44px; padding: 0 24px; background: #111; color: #fff; font-weight: 600; font-size: 14.5px; display: flex; align-items: center;">Speichern</div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 300px; gap: 64px; margin-top: 44px; align-items: start;">
+          <div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px;">STAMMDATEN</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 28px 40px; padding: 24px 0 0;">
+              <div style="grid-column: span 2;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">FIRMENNAME / NAME *</div><div style="border-bottom: 1px solid #111; padding: 8px 0 7px; font-size: 15px;">Leitner Consulting e.U.</div></div>
+              <div style="grid-column: span 2;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">STRASSE</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-size: 15px;">Praterstraße 12/4</div></div>
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">PLZ</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-size: 15px;">1020</div></div>
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">ORT</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-size: 15px;">Wien</div></div>
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">LAND (ISO-2)</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-size: 15px;">AT</div></div>
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">UID</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-size: 15px;">ATU 634 218 77</div></div>
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">E-MAIL</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-size: 15px;">office@leitner-consulting.at</div></div>
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">TELEFON</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-size: 15px;">+43 660 123 45 67</div></div>
+            </div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px; margin-top: 44px;">BANKVERBINDUNG</div>
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 28px 40px; padding: 24px 0 0;">
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">IBAN</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-family: 'IBM Plex Mono', monospace; font-size: 14px;">AT61 2011 1824 5533 9801</div></div>
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">BIC</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-family: 'IBM Plex Mono', monospace; font-size: 14px;">GIBAATWWXXX</div></div>
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">BANK</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-size: 15px;">Erste Bank</div></div>
+            </div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px; margin-top: 44px;">UMSATZSTEUER</div>
+            <div style="padding: 22px 0 0;">
+              <div style="display: flex; align-items: flex-start; gap: 12px; font-size: 14.5px;"><span style="width: 16px; height: 16px; border: 1px solid #111; display: inline-block; margin-top: 2px;"></span><span>Kleinunternehmerregelung (§6 Abs 1 Z 27 UStG)<br><span style="font-size: 13px; color: #8A8A86;">Neue Belege starten ohne USt, der Pflichthinweis wird gedruckt.</span></span></div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; margin-top: 24px;">EIGENER HINWEISTEXT</div>
+              <div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 22px; font-size: 15px; color: #9A9A96;">Leer = gesetzlicher Standardtext.</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px;">BRIEFPAPIER</div>
+            <div style="font-size: 13.5px; color: #55554F; line-height: 1.6; padding: 16px 0;">Ein Vektor-PDF als Hintergrund jeder Beleg-Seite. Das Druckbild funktioniert auch ohne.</div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0 16px; font-size: 14px;"><span style="color: #55554F;">Status</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px;">● HINTERLEGT</span></div>
+            <div style="height: 42px; border: 1px solid #111; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center;">PDF hochladen</div>
+            <div style="font-size: 13.5px; color: #55554F; text-decoration: underline; text-underline-offset: 3px; text-align: center; padding-top: 14px;">Briefpapier entfernen</div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px; margin-top: 40px;">WEITERE EINSTELLUNGEN</div>
+            <div style="font-size: 14px; padding-top: 14px;"><span style="border-bottom: 1px solid #111; padding-bottom: 1px;">E-Mail-Versand</span> →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================ SETTINGS MAIL ================================ -->
+  <div id="mail" data-screen-label="E-Mail-Versand" style="width: 1440px; margin-top: 64px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8A8A86; margin-bottom: 10px;">§4.7 /SETTINGS/MAIL — E-MAIL-VERSAND</div>
+    <div style="background: #fff; border: 1px solid #D9D9D7;">
+      <div style="height: 60px; border-bottom: 1px solid #E5E5E3; display: flex; align-items: center; justify-content: space-between; padding: 0 80px;">
+        <div style="display: flex; align-items: center; gap: 10px;"><img src="assets/hand-black.png" alt="" style="width: 20px; height: auto;"><span style="font-weight: 600; font-size: 17px;">floq</span></div>
+        <div style="display: flex; gap: 32px; font-size: 14.5px;">
+          <div style="color: #8A8A86; padding: 18px 0;">Übersicht</div>
+          <div style="color: #8A8A86; padding: 18px 0;">Belege</div>
+          <div style="font-weight: 600; border-bottom: 2px solid #111; padding: 18px 0 16px;">Einstellungen</div>
+        </div>
+        <div style="display: flex; gap: 20px; font-size: 14px; align-items: center;"><span>Anna Leitner</span><span style="color: #8A8A86; text-decoration: underline; text-underline-offset: 3px;">Abmelden</span></div>
+      </div>
+      <div style="max-width: 1280px; margin: 0 auto; padding: 56px 0 96px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div style="font-size: 30px; font-weight: 500; letter-spacing: -0.02em;">E-Mail-Versand</div>
+            <div style="font-size: 14px; color: #8A8A86; margin-top: 6px;">Belege gehen über deinen eigenen Mail-Server raus — dein Kunde sieht nur deinen Absender.</div>
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <div style="height: 44px; padding: 0 22px; border: 1px solid #111; font-weight: 600; font-size: 14.5px; display: flex; align-items: center;">Test-Mail senden</div>
+            <div style="height: 44px; padding: 0 24px; background: #111; color: #fff; font-weight: 600; font-size: 14.5px; display: flex; align-items: center;">Speichern</div>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 300px; gap: 64px; margin-top: 44px; align-items: start;">
+          <div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px;">SMTP-ZUGANG</div>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 28px 40px; padding: 24px 0 0;">
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">HOST *</div><div style="border-bottom: 1px solid #111; padding: 8px 0 7px; font-family: 'IBM Plex Mono', monospace; font-size: 14px;">smtp.world4you.com</div></div>
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">PORT</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-family: 'IBM Plex Mono', monospace; font-size: 14px;">587</div></div>
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">BENUTZERNAME</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-size: 15px;">office@leitner-consulting.at</div></div>
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">PASSWORT</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-size: 15px; color: #9A9A96;">••••••••&nbsp;&nbsp;<span style="font-size: 12px;">gespeichert — nur zum Ändern ausfüllen</span></div></div>
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">ABSENDER-ADRESSE (FROM) *</div><div style="border-bottom: 1px solid #111; padding: 8px 0 7px; font-size: 15px;">office@leitner-consulting.at</div></div>
+              <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999;">ANZEIGENAME</div><div style="border-bottom: 1px solid #CACAC6; padding: 8px 0 7px; font-size: 15px; color: #9A9A96;">leer = Firmenname</div></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px;">HINWEISE</div>
+            <div style="font-size: 13.5px; color: #55554F; line-height: 1.7; padding: 16px 0; border-bottom: 1px solid #E5E5E3;">Port 465 = SSL, Port 587 = STARTTLS. Im Zweifel 587.</div>
+            <div style="font-size: 13.5px; color: #55554F; line-height: 1.7; padding: 16px 0; border-bottom: 1px solid #E5E5E3;">Das Passwort wird verschlüsselt gespeichert und nie angezeigt.</div>
+            <div style="font-size: 13.5px; color: #55554F; line-height: 1.7; padding: 16px 0;">Die Test-Mail geht an deine Firmen-E-Mail.</div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #999; border-bottom: 1px solid #111; padding-bottom: 12px; margin-top: 24px;">WEITERE EINSTELLUNGEN</div>
+            <div style="font-size: 14px; padding-top: 14px;">← <span style="border-bottom: 1px solid #111; padding-bottom: 1px;">Firmenprofil</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================ WHITE-LABEL DOKUMENT ================================ -->
+  <div id="dokument" data-screen-label="Öffentliche Dokument-Seite" style="width: 1440px; margin-top: 64px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8A8A86; margin-bottom: 10px;">§4.8 /D?T={TOKEN} — WHITE-LABEL, KEIN FLOQ-BRAND</div>
+    <div style="display: grid; grid-template-columns: 1fr 380px; gap: 40px; align-items: start;">
+      <div style="background: #F6F6F4; border: 1px solid #D9D9D7;">
+        <div style="background: #fff; border-bottom: 1px solid #E5E5E3; display: flex; align-items: center; justify-content: space-between; padding: 20px 48px;">
+          <div><div style="font-size: 16px; font-weight: 700;">Leitner Consulting e.U.</div><div style="font-size: 13.5px; color: #8A8A86; margin-top: 2px;">Rechnung 2026-11-0003</div></div>
+          <div style="height: 40px; padding: 0 20px; border: 1px solid #111; font-weight: 600; font-size: 14px; display: flex; align-items: center;">PDF herunterladen</div>
+        </div>
+        <div style="display: flex; justify-content: center; padding: 40px 0 56px;">
+          <div style="width: 420px; aspect-ratio: 210 / 297; background: #fff; border: 1px solid #E5E5E3; padding: 40px 36px; box-sizing: border-box;">
+            <div style="font-size: 7.5px; color: #9A9A96; border-bottom: 0.5px solid #CACAC6; padding-bottom: 2px; display: inline-block;">Leitner Consulting e.U. · Praterstraße 12/4 · 1020 Wien</div>
+            <div style="font-size: 9px; margin-top: 12px; line-height: 1.6;">Muster &amp; Söhne GmbH<br>Hauptplatz 3<br>8010 Graz</div>
+            <div style="font-size: 13px; font-weight: 700; margin-top: 26px;">Rechnung</div>
+            <div style="border-top: 0.5px solid #111; margin-top: 10px;"></div>
+            <div style="font-size: 8px; display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 0.5px solid #E5E5E3;"><span>1 · Konzeption &amp; Beratung, 3 Std.</span><span>330,00</span></div>
+            <div style="font-size: 8px; display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 0.5px solid #E5E5E3;"><span>2 · Dokumentation</span><span>7,50</span></div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 8px;"><div style="width: 55%; font-size: 8px;"><div style="display: flex; justify-content: space-between; padding: 2px 0;"><span>netto</span><span>337,50</span></div><div style="display: flex; justify-content: space-between; padding: 2px 0;"><span>USt 20 %</span><span>67,50</span></div><div style="display: flex; justify-content: space-between; font-weight: 700; border-top: 0.5px solid #111; margin-top: 3px; padding-top: 3px;"><span>brutto</span><span>405,00 €</span></div></div></div>
+          </div>
+        </div>
+        <div style="text-align: center; font-size: 12.5px; color: #9A9A96; padding-bottom: 24px;">Leitner Consulting e.U. · office@leitner-consulting.at</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 40px;">
+        <div style="background: #F6F6F4; border: 1px solid #D9D9D7; padding: 72px 48px; text-align: center;">
+          <div style="font-size: 18px; font-weight: 700;">Dokument nicht gefunden</div>
+          <div style="font-size: 14px; color: #55554F; line-height: 1.6; margin-top: 10px;">Der Link ist ungültig. Wurde er vollständig kopiert?</div>
+        </div>
+        <div style="background: #F6F6F4; border: 1px solid #D9D9D7; padding: 72px 48px; text-align: center;">
+          <div style="font-size: 18px; font-weight: 700;">Link abgelaufen</div>
+          <div style="font-size: 14px; color: #55554F; line-height: 1.6; margin-top: 10px;">Dieses Dokument ist nicht mehr abrufbar. Bitte wende dich an den Aussteller.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================ E-MAIL ================================ -->
+  <div id="email" data-screen-label="Versand-E-Mail" style="width: 1440px; margin-top: 64px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8A8A86; margin-bottom: 10px;">§4.9 VERSAND-E-MAIL — WHITE-LABEL · NUR INLINE-CSS</div>
+    <div style="background: #EFEFED; border: 1px solid #D9D9D7; padding: 56px 0; display: flex; justify-content: center; gap: 48px;">
+      <div style="width: 560px; background: #fff; border: 1px solid #E0E0DE;">
+        <div style="padding: 40px 44px;">
+          <div style="font-size: 15px; line-height: 1.65; color: #33332F;">Sehr geehrte Damen und Herren,<br>anbei die Rechnung für die Beratung im Juni — danke für die gute Zusammenarbeit.<br><span style="color: #8A8A86;">— Anna Leitner</span></div>
+          <div style="height: 46px; background: #1A1A1A; color: #fff; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; margin-top: 32px;">Dokument ansehen</div>
+          <div style="font-size: 12.5px; color: #8A8A86; margin-top: 14px; line-height: 1.6;">Falls der Button nicht funktioniert:<br><span style="text-decoration: underline;">https://leitner-consulting.at/d?t=k7Jm…</span></div>
+        </div>
+        <div style="border-top: 1px solid #E5E5E3; padding: 24px 44px 30px;">
+          <div style="font-size: 13.5px; font-weight: 700;">Leitner Consulting e.U.</div>
+          <div style="font-size: 12.5px; color: #8A8A86; line-height: 1.7; margin-top: 4px;">Praterstraße 12/4, 1020 Wien<br>office@leitner-consulting.at · ATU 634 218 77 · AT61 2011 1824 5533 9801</div>
+        </div>
+      </div>
+      <div style="width: 380px; background: #fff; border: 1px solid #E0E0DE; align-self: flex-start;">
+        <div style="padding: 32px 36px;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.14em; color: #999;">VARIANTE: PDF-ANHANG</div>
+          <div style="font-size: 14.5px; line-height: 1.65; color: #33332F; margin-top: 14px;">Den Beleg finden Sie im Anhang dieser E-Mail.</div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 18px; font-size: 13px; color: #55554F;"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; border: 1px solid #CACAC6; padding: 3px 7px;">PDF</span>2026-11-0003.pdf · 84 KB</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================ PDF ================================ -->
+  <div id="pdf" data-screen-label="Beleg-PDF" style="width: 1440px; margin-top: 64px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8A8A86; margin-bottom: 10px;">§4.10 BELEG-PDF — A4-DRUCKBILD (OHNE BRIEFPAPIER)</div>
+    <div style="background: #55554F; border: 1px solid #D9D9D7; padding: 64px 0; display: flex; justify-content: center;">
+      <div style="width: 620px; aspect-ratio: 210 / 297; background: #fff; padding: 64px 58px 52px; box-sizing: border-box; position: relative; font-size: 11px;">
+        <div style="position: absolute; top: 150px; left: 58px;">
+          <div style="font-size: 8px; color: #9A9A96; border-bottom: 0.5px solid #CACAC6; padding-bottom: 2px; display: inline-block;">Leitner Consulting e.U. · Praterstraße 12/4 · 1020 Wien</div>
+          <div style="font-size: 11.5px; margin-top: 12px; line-height: 1.65;">Muster &amp; Söhne GmbH<br>z. H. Herrn Ing. Karl Muster<br>Hauptplatz 3<br>8010 Graz</div>
+        </div>
+        <div style="position: absolute; top: 150px; right: 58px; font-size: 9.5px; color: #55554F;">
+          <div style="display: grid; grid-template-columns: auto auto; gap: 4px 18px;">
+            <span>Rechnungsnummer</span><span style="color: #111; text-align: right;">2026-11-0003</span>
+            <span>Rechnungsdatum</span><span style="color: #111; text-align: right;">28.06.2026</span>
+            <span>Leistungszeitraum</span><span style="color: #111; text-align: right;">01.–30.06.2026</span>
+            <span>UID</span><span style="color: #111; text-align: right;">ATU 634 218 77</span>
+          </div>
+        </div>
+        <div style="position: absolute; top: 320px; left: 58px; right: 58px;">
+          <div style="font-size: 16px; font-weight: 700;">Rechnung</div>
+          <div style="font-size: 10.5px; color: #33332F; margin-top: 8px;">Für die im Juni erbrachten Leistungen verrechne ich wie folgt:</div>
+          <div style="display: grid; grid-template-columns: 30px 1fr 90px 60px 90px; gap: 8px; font-size: 8.5px; color: #8A8A86; border-bottom: 0.75px solid #111; padding: 12px 0 6px;">
+            <span>Pos.</span><span>Bezeichnung</span><span style="text-align: right;">Einzelpreis</span><span style="text-align: right;">Menge</span><span style="text-align: right;">Netto</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 30px 1fr 90px 60px 90px; gap: 8px; font-size: 10px; padding: 8px 0; border-bottom: 0.5px solid #E5E5E3;">
+            <span>1</span><span>Konzeption &amp; Beratung</span><span style="text-align: right;">110,00</span><span style="text-align: right;">3 Std.</span><span style="text-align: right;">330,00</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 30px 1fr 90px 60px 90px; gap: 8px; font-size: 9.5px; color: #55554F; padding: 6px 0; border-bottom: 0.5px solid #E5E5E3;">
+            <span></span><span style="padding-left: 14px;">• Treuerabatt 10 %</span><span></span><span></span><span style="text-align: right;">−33,00</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 30px 1fr 90px 60px 90px; gap: 8px; font-size: 10px; padding: 8px 0; border-bottom: 0.5px solid #E5E5E3;">
+            <span>2</span><span>Dokumentation</span><span style="text-align: right;">7,50</span><span style="text-align: right;">1 Psch.</span><span style="text-align: right;">40,50</span>
+          </div>
+          <div style="display: flex; justify-content: flex-end; margin-top: 14px;">
+            <div style="width: 46%; font-size: 10px;">
+              <div style="display: flex; justify-content: space-between; padding: 3px 0;"><span>Gesamtbetrag netto</span><span>337,50</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 3px 0;"><span>zzgl. Umsatzsteuer 20 %</span><span>67,50</span></div>
+              <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 10.5px; border-top: 0.75px solid #111; margin-top: 4px; padding-top: 5px;"><span>Gesamtbetrag brutto</span><span>405,00 €</span></div>
+            </div>
+          </div>
+          <div style="font-size: 10px; color: #33332F; margin-top: 22px; line-height: 1.6;">Zahlbar binnen 14 Tagen ohne Abzug. Bei Zahlung bis 05.07.2026: 2 % Skonto.<br>Vielen Dank für Ihren Auftrag!</div>
+        </div>
+        <div style="position: absolute; bottom: 44px; left: 58px; right: 58px; border-top: 0.5px solid #CACAC6; padding-top: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; font-size: 8px; color: #8A8A86; line-height: 1.7;">
+          <span>Leitner Consulting e.U.<br>ATU 634 218 77</span>
+          <span style="text-align: center;">Praterstraße 12/4<br>1020 Wien, Österreich</span>
+          <span style="text-align: right;">office@leitner-consulting.at<br>AT61 2011 1824 5533 9801</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================ FEHLER ================================ -->
+  <div id="fehler" data-screen-label="Fehler" style="width: 1440px; margin-top: 64px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8A8A86; margin-bottom: 10px;">§4.11 /ERROR + 503</div>
+    <div style="display: flex; gap: 40px;">
+      <div style="flex: 1; background: #fff; border: 1px solid #D9D9D7; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 96px 0;">
+        <img src="assets/hand-black.png" alt="" style="width: 40px; height: auto; opacity: 0.25;">
+        <div style="font-size: 22px; font-weight: 600; margin-top: 24px;">Da ist etwas schiefgelaufen.</div>
+        <div style="font-size: 14.5px; color: #55554F; margin-top: 8px;">Der Fehler ist protokolliert. Probier’s gleich nochmal.</div>
+        <div style="font-size: 14px; border-bottom: 1px solid #111; padding-bottom: 2px; margin-top: 28px; font-weight: 600;">Zur Übersicht</div>
+      </div>
+      <div style="flex: 1; background: #fff; border: 1px solid #D9D9D7; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 96px 0;">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; color: #9A9A96;">503</div>
+        <div style="font-size: 17px; font-weight: 600; margin-top: 16px;">Vorübergehend nicht verfügbar.</div>
+        <div style="font-size: 14px; color: #55554F; margin-top: 6px;">Bitte versuch es später wieder.</div>
+      </div>
+    </div>
+  </div>
+
+</section>
+</x-dc>
+</body>
+</html>
