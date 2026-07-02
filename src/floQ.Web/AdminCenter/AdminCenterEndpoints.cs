@@ -1,4 +1,6 @@
 using System.Text.Json;
+using floQ.Web.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace floQ.Web.AdminCenter;
@@ -15,10 +17,15 @@ namespace floQ.Web.AdminCenter;
 ///                                   Anstoß behandelt: der sofortige Pull
 ///                                   holt den Shutoff-Zustand je Tenant aus
 ///                                   global-settings (Quelle der Wahrheit).
+/// - GET  /api/billing-payer       — Rechnungs-Stammdaten des Tenants für
+///                                   den AC-Rechnungslauf (Pull-on-Invoice:
+///                                   das AC ruft bei jeder Rechnungserstellung
+///                                   und friert die Antwort als Snapshot ein).
+///                                   Tenant kommt aus X-Instance-ShortName.
 /// - GET  /health                  — Liveness für Deploy-Verify.
 /// - GET  /__subscription          — Status-Ping (aktiv + Version).
 ///
-/// Auth der POST-Endpoints: X-Platform-Key, constant-time-Vergleich.
+/// Auth der AC-Endpoints: X-Platform-Key, constant-time-Vergleich.
 /// </summary>
 public static class AdminCenterEndpoints
 {
@@ -66,6 +73,54 @@ public static class AdminCenterEndpoints
             return Results.Ok(new { success = true, data = (object?)null, errorMessage = (string?)null });
         }).AllowAnonymous();
 
+        // Rechnungs-Stammdaten (Payer) für den AC-Rechnungslauf. Das AC ruft
+        // bei JEDER Rechnungserstellung und friert die Antwort als Snapshot
+        // ein — floQ liefert immer den aktuellen CompanyProfile-Stand,
+        // cached und versioniert nichts.
+        app.MapGet("/api/billing-payer", async (
+            HttpContext ctx,
+            IOptions<AdminCenterOptions> opts,
+            AppDbContext db,
+            ILogger<AdminCenterOptions> log,
+            CancellationToken ct) =>
+        {
+            if (!ValidateKey(ctx, opts.Value, log)) return Results.Unauthorized();
+
+            var slug = ctx.Request.Headers["X-Instance-ShortName"].ToString().Trim().ToLowerInvariant();
+            if (slug.Length == 0) return Results.NotFound();
+
+            var tenant = await db.Tenants.SingleOrDefaultAsync(t => t.Slug == slug, ct);
+            if (tenant is null)
+            {
+                log.LogWarning("billing-payer: unbekannter Slug '{Slug}'.", slug);
+                return Results.NotFound();
+            }
+
+            // Anonymer Plattform-Call → kein TenantContext, Global Query
+            // Filter würde leer matchen. Daher explizit ungefiltert + TenantId.
+            var profile = await db.CompanyProfiles
+                .IgnoreQueryFilters()
+                .SingleOrDefaultAsync(c => c.TenantId == tenant.Id, ct);
+
+            if (profile is null || string.IsNullOrWhiteSpace(profile.LegalName))
+            {
+                // AC nutzt dann den Snapshot der letzten Rechnung bzw.
+                // überspringt und probiert stündlich erneut.
+                return Results.Conflict(new { error = "company_profile_incomplete" });
+            }
+
+            return Results.Ok(new
+            {
+                name = profile.LegalName,
+                address = NullIfEmpty(profile.Street),
+                zip = NullIfEmpty(profile.ZipCode),
+                city = NullIfEmpty(profile.City),
+                country = NullIfEmpty(profile.CountryCode),
+                uid = NullIfEmpty(profile.VatId),
+                email = NullIfEmpty(profile.Email),
+            });
+        }).AllowAnonymous();
+
         app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
            .AllowAnonymous();
 
@@ -76,6 +131,9 @@ public static class AdminCenterEndpoints
             version = Environment.GetEnvironmentVariable("FLOQ_COMMIT_SHA") ?? "unknown",
         })).AllowAnonymous();
     }
+
+    private static string? NullIfEmpty(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value;
 
     /// <summary>Constant-time-Vergleich des X-Platform-Key-Headers.</summary>
     private static bool ValidateKey(HttpContext ctx, AdminCenterOptions opts, ILogger log)
