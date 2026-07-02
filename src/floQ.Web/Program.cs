@@ -4,6 +4,7 @@ using floQ.Web.Api.V1;
 using floQ.Web.Auth;
 using floQ.Web.Data;
 using floQ.Web.Services.Documents;
+using floQ.Web.Services.Mail;
 using floQ.Web.Services.Pdf;
 using floQ.Web.Services.Storage;
 using floQ.Web.Tenancy;
@@ -110,6 +111,13 @@ builder.Services.AddScoped<IDocumentEngine, DocumentEngine>();
 builder.Services.AddSingleton<HtmlToPdfService>();
 builder.Services.AddSingleton<UploadStorage>();
 
+// Versand: Tenant-SMTP (Passwort verschlüsselt in TenantSecrets),
+// Distribution mit Tracking-Link oder PDF-Anhang. Alles scoped —
+// der Tenant kommt aus dem Request-Kontext.
+builder.Services.AddScoped<TenantSecretsService>();
+builder.Services.AddScoped<EmailSender>();
+builder.Services.AddScoped<BillingDistributionService>();
+
 // AdminCenter-Anbindung (zentrale Abo-Verwaltung, https://admin.batos.at).
 // Ohne Konfiguration (PlatformKey/ShortName leer) bleibt der Sync untätig.
 builder.Services.Configure<AdminCenterOptions>(
@@ -176,5 +184,6 @@ app.MapAccountSubscriptionEndpoints();
 // REST-API v1 (API-First: die Razor Pages sind reine Consumer).
 app.MapBillingApi();
 app.MapCompanyProfileApi();
+app.MapDistributionApi();
 
 app.Run();

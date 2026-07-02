@@ -53,6 +53,11 @@ public class AppDbContext(
     public DbSet<BillingText> BillingTexts => Set<BillingText>();
     public DbSet<ReminderLevelConfig> ReminderLevelConfigs => Set<ReminderLevelConfig>();
     public DbSet<BillingLayoutItem> BillingLayoutItems => Set<BillingLayoutItem>();
+    public DbSet<DocumentDistribution> DocumentDistributions => Set<DocumentDistribution>();
+
+    // Versand-Infrastruktur (tenant-scoped)
+    public DbSet<TenantMailSettings> TenantMailSettings => Set<TenantMailSettings>();
+    public DbSet<TenantSecret> TenantSecrets => Set<TenantSecret>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -215,6 +220,38 @@ public class AppDbContext(
             b.Property(li => li.Label).HasMaxLength(128);
             b.Property(li => li.Group).HasMaxLength(64);
             b.HasIndex(li => new { li.TenantId, li.Key, li.DocumentType }).IsUnique();
+        });
+
+        modelBuilder.Entity<DocumentDistribution>(b =>
+        {
+            b.HasKey(d => d.Id);
+            b.Property(d => d.Token).HasMaxLength(64);
+            b.Property(d => d.RecipientEmail).HasMaxLength(256);
+            // Token ist der einzige Schlüssel der öffentlichen Landing-Page —
+            // global eindeutig (bewusst OHNE TenantId: der Lookup läuft anonym).
+            b.HasIndex(d => d.Token).IsUnique();
+            b.HasOne(d => d.Document).WithMany()
+                .HasForeignKey(d => d.DocumentId).OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(d => d.DocumentId);
+        });
+
+        modelBuilder.Entity<TenantMailSettings>(b =>
+        {
+            b.HasKey(m => m.Id);
+            b.Property(m => m.Host).HasMaxLength(256);
+            b.Property(m => m.UserName).HasMaxLength(256);
+            b.Property(m => m.Sender).HasMaxLength(256);
+            b.Property(m => m.SenderDisplayName).HasMaxLength(256);
+            // Eine SMTP-Konfiguration pro Tenant.
+            b.HasIndex(m => m.TenantId).IsUnique();
+        });
+
+        modelBuilder.Entity<TenantSecret>(b =>
+        {
+            b.HasKey(s => s.Id);
+            b.Property(s => s.Provider).HasMaxLength(64);
+            b.Property(s => s.Key).HasMaxLength(64);
+            b.HasIndex(s => new { s.TenantId, s.Provider, s.Key }).IsUnique();
         });
 
         // ---- Plattform-Schicht (AC-Cache) ----

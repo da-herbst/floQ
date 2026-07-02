@@ -153,11 +153,17 @@
             <div style="display:flex;flex-direction:column;gap:8px">
                 <button class="btn btn-primary" type="button" id="btnSave">Speichern</button>
                 <button class="btn btn-accent" type="button" id="btnFinalize">Abschließen</button>
+                <button class="btn btn-accent" type="button" id="btnSend" hidden>Versenden</button>
                 <a class="btn btn-secondary" id="btnDownload" hidden>PDF herunterladen</a>
                 <button class="btn btn-secondary" type="button" id="btnProcess" hidden>Weiterverarbeiten</button>
                 <button class="btn btn-secondary" type="button" id="btnUnlock" hidden>Entsperren</button>
                 <button class="btn btn-danger" type="button" id="btnDelete">Entwurf verwerfen</button>
             </div>
+        </div>
+
+        <div class="card card-body" id="distributionsCard" hidden>
+            <div class="sb-heading">Versand</div>
+            <div id="distributionsList"></div>
         </div>
 
         <div class="card card-body" id="paymentsCard" hidden>
@@ -204,6 +210,35 @@
             </div>
         </div>
         <div class="modal-footer"><button class="btn btn-secondary" type="button" data-modal-close>Abbrechen</button></div>
+    </div>
+</div>
+
+@* ── Modal: Beleg versenden ── *@
+<div class="modal-scrim" id="sendModal" hidden>
+    <div class="modal">
+        <div class="modal-header">
+            <div>
+                <div class="modal-eyebrow">Versand</div>
+                <div class="modal-title">Beleg versenden</div>
+            </div>
+            <button class="modal-close" type="button" data-modal-close>×</button>
+        </div>
+        <div class="modal-body form-grid">
+            <div class="field span-2"><label>Empfänger-E-Mail *</label><input id="sRecipient" type="email" /></div>
+            <div class="field span-2"><label>Persönliche Nachricht (optional)</label><textarea id="sMessage" rows="4" placeholder="Sehr geehrte Damen und Herren, …"></textarea></div>
+            <div class="field-check span-2">
+                <input type="checkbox" id="sAttachPdf" />
+                <label for="sAttachPdf" style="margin:0">PDF als Datei-Anhang statt Ansichts-Link</label>
+            </div>
+            <div class="field-check span-2">
+                <input type="checkbox" id="sCopyToSelf" checked />
+                <label for="sCopyToSelf" style="margin:0">Kopie an mich (Firmen-E-Mail)</label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" type="button" data-modal-close>Abbrechen</button>
+            <button class="btn btn-accent" type="button" id="btnConfirmSend">Senden</button>
+        </div>
     </div>
 </div>
 

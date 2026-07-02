@@ -163,6 +163,7 @@
         $('btnDelete').hidden = !isDraft();
         $('btnUnlock').hidden = isDraft();
         $('btnProcess').hidden = isDraft();
+        $('btnSend').hidden = isDraft() || detail.status === 4;
         $('btnDownload').hidden = isDraft();
         $('btnDownload').href = `/api/v1/documents/${docId}/pdf?download=true`;
 
@@ -170,6 +171,10 @@
         const showPayments = detail.type === 2 && !isDraft() && detail.status !== 4;
         $('paymentsCard').hidden = !showPayments;
         if (showPayments) await loadPayments();
+
+        // Versand-Historie: alle abgeschlossenen Belege.
+        $('distributionsCard').hidden = isDraft();
+        if (!isDraft()) await loadDistributions();
 
         if (!isDraft()) switchTab('vorschau');
         if (isDraft() && detail.type === 5) await loadReminderInvoices();
@@ -318,6 +323,52 @@
             window.location.href = `/Billing/Document?id=${id}`;
         } catch (e) { floqToast(e.message, true); }
     }));
+
+    // ── Versand ─────────────────────────────────────────────────────────
+    $('btnSend').addEventListener('click', () => {
+        $('sRecipient').value = detail.recipientEmail || '';
+        $('sendModal').hidden = false;
+    });
+
+    $('btnConfirmSend').addEventListener('click', async () => {
+        const btn = $('btnConfirmSend');
+        btn.disabled = true;
+        btn.textContent = 'Sendet …';
+        try {
+            await floqApi.post(`/api/v1/documents/${docId}/send`, {
+                recipientEmail: $('sRecipient').value.trim(),
+                message: $('sMessage').value.trim() || null,
+                attachPdf: $('sAttachPdf').checked,
+                sendCopyToSelf: $('sCopyToSelf').checked,
+            });
+            $('sendModal').hidden = true;
+            floqToast('Beleg versendet.');
+            detail = await floqApi.get(`/api/v1/documents/${docId}`);
+            hFill($('asideStatus'), h('span', { class: `badge badge-${STATUS_TONE[detail.status]}` }, [h('span', { class: 'dot' }), STATUS_LABEL[detail.status]]));
+            await loadDistributions();
+        } catch (e) {
+            floqToast(e.message, true);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Senden';
+        }
+    });
+
+    async function loadDistributions() {
+        const dists = await floqApi.get(`/api/v1/documents/${docId}/distributions`);
+        const rows = dists.map(d => {
+            const trail = [];
+            if (d.sentAtVienna) trail.push(`gesendet ${floqFmt.date(d.sentAtVienna)}`);
+            trail.push(d.attachPdf ? 'PDF-Anhang' : 'Link');
+            if (d.openCount > 0) trail.push(`geöffnet ×${d.openCount}`);
+            if (d.downloadCount > 0) trail.push(`geladen ×${d.downloadCount}`);
+            return h('div', { style: 'padding:4px 0' }, [
+                h('div', { class: 't-sm', style: 'font-weight:600' }, d.recipientEmail),
+                h('div', { class: 't-xs t-muted' }, trail.join(' · ')),
+            ]);
+        });
+        hFill($('distributionsList'), rows.length ? rows : h('div', { class: 't-xs t-muted' }, 'Noch nicht versendet.'));
+    }
 
     // ── Zahlungen ───────────────────────────────────────────────────────
     async function loadPayments() {
