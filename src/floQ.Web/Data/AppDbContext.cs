@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using System.Reflection;
+using floQ.Domain.Billing;
 using floQ.Domain.Identity;
 using floQ.Domain.Platform;
 using floQ.Domain.Settings;
@@ -40,6 +41,17 @@ public class AppDbContext(
 
     // Deployment-Schicht (Singleton-State, AC-Cache)
     public DbSet<PlatformState> PlatformStates => Set<PlatformState>();
+
+    // Beleg-Domäne (TPH: eine Documents-Tabelle für alle 5 Subtypen)
+    public DbSet<Document> Documents => Set<Document>();
+    public DbSet<DocumentEntry> DocumentEntries => Set<DocumentEntry>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<ReminderInvoice> ReminderInvoices => Set<ReminderInvoice>();
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<DocumentNumberConfig> DocumentNumberConfigs => Set<DocumentNumberConfig>();
+    public DbSet<BillingText> BillingTexts => Set<BillingText>();
+    public DbSet<ReminderLevelConfig> ReminderLevelConfigs => Set<ReminderLevelConfig>();
+    public DbSet<BillingLayoutItem> BillingLayoutItems => Set<BillingLayoutItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -89,6 +101,118 @@ public class AppDbContext(
             b.Property(c => c.Bic).HasMaxLength(11);
         });
 
+        // ---- Beleg-Domäne ----
+        modelBuilder.Entity<Document>(b =>
+        {
+            b.HasKey(d => d.Id);
+            // TPH: ein Diskriminator über alle 5 ausgehenden Belegtypen.
+            b.HasDiscriminator<string>("DocType")
+                .HasValue<Quote>("Quote")
+                .HasValue<Invoice>("Invoice")
+                .HasValue<CreditNote>("CreditNote")
+                .HasValue<CancellationInvoice>("CancellationInvoice")
+                .HasValue<PaymentReminder>("PaymentReminder");
+
+            b.Property(d => d.Number).HasMaxLength(64);
+            b.Property(d => d.Gross).HasPrecision(18, 2);
+            b.Property(d => d.DiscountRate).HasPrecision(5, 2);
+            b.Property(d => d.RecipientName).HasMaxLength(256);
+            b.Property(d => d.RecipientCountry).HasMaxLength(2);
+            b.Property(d => d.RecipientUid).HasMaxLength(32);
+
+            b.HasOne(d => d.Customer).WithMany().HasForeignKey(d => d.CustomerId).OnDelete(DeleteBehavior.SetNull);
+            b.HasMany(d => d.Entries).WithOne(e => e.Document).HasForeignKey(e => e.DocumentId).OnDelete(DeleteBehavior.Cascade);
+
+            // Nummern-Eindeutigkeit pro Tenant (leere Draft-Nummern ausgenommen).
+            b.HasIndex(d => new { d.TenantId, d.Number })
+                .IsUnique()
+                .HasFilter("\"Number\" <> ''");
+            b.HasIndex(d => new { d.TenantId, d.Status });
+            b.HasIndex(d => d.CustomerId);
+        });
+
+        modelBuilder.Entity<Quote>(b => b.Property(q => q.ExternalReference).HasMaxLength(256));
+        modelBuilder.Entity<CreditNote>(b => b.HasIndex(c => c.OriginalInvoiceId));
+        modelBuilder.Entity<CancellationInvoice>(b => b.HasIndex(c => c.OriginalInvoiceId));
+        modelBuilder.Entity<PaymentReminder>(b =>
+        {
+            b.Property(p => p.ReminderFee).HasPrecision(18, 2);
+            b.Property(p => p.InterestRate).HasPrecision(5, 2);
+            b.Property(p => p.InterestAmount).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<DocumentEntry>(b =>
+        {
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Description).HasMaxLength(1024);
+            b.Property(e => e.Quantity).HasPrecision(18, 4);
+            b.Property(e => e.UnitPrice).HasPrecision(18, 4);
+            b.Property(e => e.VatRate).HasPrecision(5, 2);
+            b.Property(e => e.DiscountPercent).HasPrecision(5, 2);
+            b.Property(e => e.Unit).HasMaxLength(32);
+            b.HasIndex(e => e.DocumentId);
+        });
+
+        modelBuilder.Entity<Payment>(b =>
+        {
+            b.HasKey(p => p.Id);
+            b.Property(p => p.Amount).HasPrecision(18, 2);
+            b.Property(p => p.Reference).HasMaxLength(256);
+            b.HasOne(p => p.Invoice).WithMany(i => i.Payments)
+                .HasForeignKey(p => p.InvoiceId).OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(p => p.InvoiceId);
+        });
+
+        modelBuilder.Entity<ReminderInvoice>(b =>
+        {
+            b.HasKey(ri => new { ri.PaymentReminderId, ri.InvoiceId });
+            b.Property(ri => ri.OutstandingAmount).HasPrecision(18, 2);
+            b.HasOne(ri => ri.PaymentReminder).WithMany(pr => pr.ReminderInvoices)
+                .HasForeignKey(ri => ri.PaymentReminderId).OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(ri => ri.Invoice).WithMany()
+                .HasForeignKey(ri => ri.InvoiceId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Customer>(b =>
+        {
+            b.HasKey(c => c.Id);
+            b.Property(c => c.Name).HasMaxLength(256);
+            b.Property(c => c.CountryCode).HasMaxLength(2);
+            b.Property(c => c.VatId).HasMaxLength(32);
+            b.HasIndex(c => new { c.TenantId, c.Name });
+        });
+
+        modelBuilder.Entity<DocumentNumberConfig>(b =>
+        {
+            b.HasKey(c => c.Id);
+            b.Property(c => c.Separator).HasMaxLength(5);
+            // Ein Zähler pro (Tenant, Typ, Jahr) — Ziel des FOR-UPDATE-Locks.
+            b.HasIndex(c => new { c.TenantId, c.DocumentType, c.Year }).IsUnique();
+        });
+
+        modelBuilder.Entity<BillingText>(b =>
+        {
+            b.HasKey(t => t.Id);
+            b.HasIndex(t => new { t.TenantId, t.DocumentType }).IsUnique();
+        });
+
+        modelBuilder.Entity<ReminderLevelConfig>(b =>
+        {
+            b.HasKey(c => c.Id);
+            b.Property(c => c.DefaultFee).HasPrecision(18, 2);
+            b.Property(c => c.DefaultInterestRate).HasPrecision(5, 2);
+            b.HasIndex(c => new { c.TenantId, c.Level }).IsUnique();
+        });
+
+        modelBuilder.Entity<BillingLayoutItem>(b =>
+        {
+            b.HasKey(li => li.Id);
+            b.Property(li => li.Key).HasMaxLength(64);
+            b.Property(li => li.Label).HasMaxLength(128);
+            b.Property(li => li.Group).HasMaxLength(64);
+            b.HasIndex(li => new { li.TenantId, li.Key, li.DocumentType }).IsUnique();
+        });
+
         // ---- Deployment-Schicht ----
         modelBuilder.Entity<PlatformState>(b =>
         {
@@ -122,6 +246,11 @@ public class AppDbContext(
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (!typeof(TenantScopedEntity).IsAssignableFrom(entityType.ClrType))
+                continue;
+
+            // TPH: Filter + Index nur am Root-Entity-Typ — abgeleitete Typen
+            // (Quote, Invoice, …) erben den Filter der Basisklasse (Document).
+            if (entityType.BaseType is not null)
                 continue;
 
             // Index auf TenantId (idempotent)
