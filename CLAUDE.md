@@ -20,6 +20,7 @@
 
 ## Architektur-Prinzipien
 
+- **Verwaltung NUR über das AdminCenter**: floQ hat keinen Admin-, Hersteller- oder Developer-Zugang und bekommt nie einen. Jede Verwaltungsfunktion (Abonnenten, Abos, Shutoff, Preise, Billing, System-Mails, künftige Support-Aktionen wie Tenant-Löschung) gehört ins batOSAdminCenter — floQ-seitig höchstens als eingehender Plattform-Endpoint (X-Platform-Key, Muster `AdminCenter/AdminCenterEndpoints.cs`), niemals als floQ-UI oder Sonder-Login. In floQ loggen sich ausschließlich Kunden ein.
 - **API-First**: Jeder UI-Flow geht über dieselbe REST-API. Razor Pages sind Consumer, kein Sonderpfad.
 - **Domain pur**: `floQ.Domain` hat keine ASP.NET-/EF-Abhängigkeiten. Persistenz-Konfiguration in `Web/` via Fluent API.
 - **API-Versionierung**: Endpoints unter `/api/v1/...` ab Tag 1. Breaking Changes → neue Version, nie stillschweigend.
