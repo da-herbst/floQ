@@ -484,3 +484,6 @@ $RECYCLE.BIN/
 # floQ: lokales Upload-Root der Dev-Umgebung (Uploads:BasePath).
 # Bewusst NICHT "data/" — kollidiert case-insensitiv mit src/floQ.Web/Data/!
 src/floQ.Web/uploads/
+
+# Lokale Claude-Code-Helfer (nicht live-relevant)
+.claude/

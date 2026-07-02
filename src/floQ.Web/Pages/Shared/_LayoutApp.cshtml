@@ -3,19 +3,16 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@ViewData["Title"] — floQ</title>
-    <link rel="icon" type="image/png" href="~/img/floQ_mark_black.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+    <title>@ViewData["Title"] — floq</title>
+    <link rel="icon" type="image/png" href="~/img/hand-black.png" />
+    <link rel="stylesheet" href="~/css/floq.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
 <header class="app-header">
     <a class="app-brand" href="/Billing">
-        <span class="app-brand-mark" aria-hidden="true"></span>
-        <span class="app-brand-word">flo<span class="q">Q</span></span>
+        <img class="app-brand-mark" src="~/img/hand-black.png" alt="" aria-hidden="true" />
+        <span class="app-brand-word">floq</span>
     </a>
     <nav class="app-nav">
         <a href="/Billing" class="@(ViewData["NavActive"] as string == "dashboard" ? "is-active" : "")">Übersicht</a>
