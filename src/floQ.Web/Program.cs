@@ -50,6 +50,25 @@ builder.Services
         options.AccessDeniedPath = "/auth/login";
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
         options.SlidingExpiration = true;
+
+        // API-Calls kriegen 401/403 statt Redirect auf die Login-HTML —
+        // dieselbe API bedient UI (Cookie) und externe Consumer.
+        options.Events.OnRedirectToLogin = ctx =>
+        {
+            if (ctx.Request.Path.StartsWithSegments("/api"))
+                ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            else
+                ctx.Response.Redirect(ctx.RedirectUri);
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = ctx =>
+        {
+            if (ctx.Request.Path.StartsWithSegments("/api"))
+                ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+            else
+                ctx.Response.Redirect(ctx.RedirectUri);
+            return Task.CompletedTask;
+        };
     });
 
 // Policy "InternalRender": lässt die Playwright-Self-Calls der PDF-Pipeline
@@ -95,6 +114,7 @@ builder.Services.AddSingleton<UploadStorage>();
 builder.Services.Configure<AdminCenterOptions>(
     builder.Configuration.GetSection(AdminCenterOptions.SectionName));
 builder.Services.AddHttpClient(AdminCenterSyncService.HttpClientName);
+builder.Services.AddScoped<AdminCenterClient>();
 builder.Services.AddSingleton<IAdminCenterSyncTrigger, AdminCenterSyncTrigger>();
 builder.Services.AddSingleton<TenantShutoffService>();
 builder.Services.AddSingleton<ModuleCatalog>();
@@ -150,5 +170,6 @@ app.MapRazorPages()
    .WithStaticAssets();
 
 app.MapAdminCenterEndpoints();
+app.MapAccountSubscriptionEndpoints();
 
 app.Run();
