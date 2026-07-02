@@ -90,6 +90,7 @@
             <p style="margin-top:1.5rem;font-size:0.95rem;">
                 @if (User.Identity?.IsAuthenticated == true)
                 {
+                    <a href="/Billing" style="color:#B08D57;text-decoration:none;margin-right:1rem;font-weight:700;">Zur App</a>
                     <span>Angemeldet als <strong>@User.Identity.Name</strong> · </span>
                     <a href="/auth/logout" style="color:#B08D57;">Abmelden</a>
                 }

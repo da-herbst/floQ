@@ -1,5 +1,6 @@
 using Fido2NetLib;
 using floQ.Web.AdminCenter;
+using floQ.Web.Api.V1;
 using floQ.Web.Auth;
 using floQ.Web.Data;
 using floQ.Web.Services.Documents;
@@ -171,5 +172,9 @@ app.MapRazorPages()
 
 app.MapAdminCenterEndpoints();
 app.MapAccountSubscriptionEndpoints();
+
+// REST-API v1 (API-First: die Razor Pages sind reine Consumer).
+app.MapBillingApi();
+app.MapCompanyProfileApi();
 
 app.Run();

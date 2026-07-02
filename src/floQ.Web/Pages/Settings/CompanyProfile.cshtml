@@ -1,0 +1,79 @@
+@page
+@model floQ.Web.Pages.Settings.CompanyProfileModel
+@{
+    Layout = "_LayoutApp";
+    ViewData["Title"] = "Firmenprofil";
+    ViewData["NavActive"] = "settings";
+}
+
+<div class="page-head">
+    <div>
+        <div class="page-title">Firmenprofil</div>
+        <div class="page-sub">Absender, Footer und Briefpapier deiner Belege — dein Kunde sieht ausschließlich diesen Brand.</div>
+    </div>
+    <button class="btn btn-primary" id="btnSaveProfile">Speichern</button>
+</div>
+
+<div class="two-col">
+    <div>
+        <div class="card">
+            <div class="card-header"><div class="card-title">Stammdaten</div></div>
+            <div class="card-body form-grid">
+                <div class="field span-2"><label>Firmenname / Name *</label><input id="fLegalName" /></div>
+                <div class="field span-2"><label>Straße</label><input id="fStreet" /></div>
+                <div class="field"><label>PLZ</label><input id="fZipCode" /></div>
+                <div class="field"><label>Ort</label><input id="fCity" /></div>
+                <div class="field"><label>Land (ISO-2)</label><input id="fCountryCode" maxlength="2" placeholder="AT" /></div>
+                <div class="field"><label>UID</label><input id="fVatId" placeholder="ATU…" /></div>
+                <div class="field"><label>E-Mail</label><input id="fEmail" type="email" /></div>
+                <div class="field"><label>Telefon</label><input id="fPhone" /></div>
+                <div class="field span-2"><label>Website</label><input id="fWebsite" /></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><div class="card-title">Bankverbindung</div></div>
+            <div class="card-body form-grid">
+                <div class="field span-2"><label>IBAN</label><input id="fIban" /></div>
+                <div class="field"><label>BIC</label><input id="fBic" /></div>
+                <div class="field"><label>Bank</label><input id="fBankName" /></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">Umsatzsteuer</div>
+                    <div class="card-subtitle">Kleinunternehmer: neue Belege starten ohne USt, der Pflichthinweis wird gedruckt.</div>
+                </div>
+            </div>
+            <div class="card-body form-grid">
+                <div class="field-check span-2">
+                    <input type="checkbox" id="fIsSmallBusiness" />
+                    <label for="fIsSmallBusiness" style="margin:0">Kleinunternehmerregelung (§6 Abs 1 Z 27 UStG)</label>
+                </div>
+                <div class="field span-2"><label>Eigener Hinweistext (leer = gesetzlicher Standardtext)</label><textarea id="fTaxExemptionText" rows="2"></textarea></div>
+            </div>
+        </div>
+    </div>
+
+    <aside>
+        <div class="card card-body">
+            <div class="sb-heading">Briefpapier</div>
+            <div class="t-sm t-muted" style="margin-bottom:10px">
+                Vektor-PDF, wird als Hintergrund unter jede Beleg-Seite gelegt (Logo, Kopfband, Fußdesign).
+            </div>
+            <div class="meta-row"><span class="meta-label">Status</span><span class="meta-value" id="letterheadStatus">–</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+                <input type="file" id="letterheadFile" accept="application/pdf" hidden />
+                <button class="btn btn-secondary btn-sm" type="button" id="btnUploadLetterhead">PDF hochladen</button>
+                <button class="btn btn-danger btn-sm" type="button" id="btnDeleteLetterhead" hidden>Briefpapier entfernen</button>
+            </div>
+        </div>
+    </aside>
+</div>
+
+@section Scripts {
+    <script src="~/js/api.js" asp-append-version="true"></script>
+    <script src="~/js/company-profile.js" asp-append-version="true"></script>
+}

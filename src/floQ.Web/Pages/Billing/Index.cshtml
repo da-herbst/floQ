@@ -1,0 +1,49 @@
+@page
+@model floQ.Web.Pages.Billing.IndexModel
+@{
+    Layout = "_LayoutApp";
+    ViewData["Title"] = "Übersicht";
+    ViewData["NavActive"] = "dashboard";
+}
+
+<div class="page-head">
+    <div>
+        <div class="page-title">Übersicht</div>
+        <div class="page-sub" id="dashDate"></div>
+    </div>
+    <button class="btn btn-primary" id="btnNewInvoice">+ Neue Rechnung</button>
+</div>
+
+<div class="kpi-grid" id="kpiGrid">
+    <div class="kpi"><div class="kpi-label">Entwürfe</div><div class="kpi-value">–</div></div>
+    <div class="kpi"><div class="kpi-label">Offene Forderungen</div><div class="kpi-value">–</div></div>
+    <div class="kpi"><div class="kpi-label">Überfällig</div><div class="kpi-value">–</div></div>
+    <div class="kpi"><div class="kpi-label">Umsatz (Jahr)</div><div class="kpi-value">–</div></div>
+</div>
+
+<div class="two-col">
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Überfällige Rechnungen</div>
+                <div class="card-subtitle">nach Fälligkeit</div>
+            </div>
+            <a class="btn btn-secondary btn-sm" href="/Billing/Documents">Alle Belege</a>
+        </div>
+        <div class="ent-list" id="overdueList">
+            <div class="ent-empty">Lädt …</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><div class="card-title">Zuletzt bearbeitet</div></div>
+        <div class="ent-list" id="recentList">
+            <div class="ent-empty">Lädt …</div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/api.js" asp-append-version="true"></script>
+    <script src="~/js/billing-dashboard.js" asp-append-version="true"></script>
+}

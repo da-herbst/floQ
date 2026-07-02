@@ -1,0 +1,245 @@
+@page
+@model floQ.Web.Pages.Billing.DocumentModel
+@{
+    Layout = "_LayoutApp";
+    ViewData["Title"] = "Beleg";
+    ViewData["NavActive"] = "documents";
+}
+
+<div class="page-head">
+    <div>
+        <div class="page-title"><span id="docTypeName">Beleg</span> <span id="docNumber" class="num t-muted"></span></div>
+        <div class="page-sub" id="docSub"></div>
+    </div>
+    <div class="hstack">
+        <a class="btn btn-secondary" href="/Billing/Documents">Zur Liste</a>
+    </div>
+</div>
+
+<div class="two-col">
+    <div>
+        <div class="tabbar" id="tabbar">
+            <button class="tab is-active" type="button" data-tab="empfaenger">Empfänger</button>
+            <button class="tab" type="button" data-tab="positionen" id="tabPositionen">Positionen</button>
+            <button class="tab" type="button" data-tab="rechnungen" id="tabRechnungen" hidden>Rechnungen</button>
+            <button class="tab" type="button" data-tab="details">Details</button>
+            <button class="tab" type="button" data-tab="vorschau">Vorschau</button>
+        </div>
+
+        @* ── Tab: Empfänger (autarker Beleg: Snapshot ist die Wahrheit) ── *@
+        <div data-tabpanel="empfaenger">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Empfänger</div>
+                        <div class="card-subtitle">Direkt eintippen — der Beleg ist autark, kein Kundenstamm nötig.</div>
+                    </div>
+                </div>
+                <div class="card-body form-grid" id="recipientForm">
+                    <div class="field span-2"><label>Name *</label><input id="fRecipientName" /></div>
+                    <div class="field span-2"><label>Adresse</label><input id="fRecipientAddress" /></div>
+                    <div class="field"><label>PLZ</label><input id="fRecipientZip" /></div>
+                    <div class="field"><label>Ort</label><input id="fRecipientCity" /></div>
+                    <div class="field"><label>Land (ISO-2)</label><input id="fRecipientCountry" maxlength="2" placeholder="AT" /></div>
+                    <div class="field"><label>UID</label><input id="fRecipientUid" placeholder="ATU…" /></div>
+                    <div class="field span-2"><label>E-Mail</label><input id="fRecipientEmail" type="email" /></div>
+                </div>
+            </div>
+        </div>
+
+        @* ── Tab: Positionen (Freitext, ohne Artikel-Zwang) ── *@
+        <div data-tabpanel="positionen" hidden>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Positionen</div>
+                    <div class="hstack">
+                        <button class="btn btn-secondary btn-sm" type="button" id="btnAddEntry">+ Position</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="entries-table">
+                        <thead>
+                            <tr>
+                                <th style="width:34%">Bezeichnung</th>
+                                <th style="width:10%">Menge</th>
+                                <th style="width:12%">Einheit</th>
+                                <th style="width:13%">Einzelpreis €</th>
+                                <th style="width:9%">USt %</th>
+                                <th style="width:13%" class="num">Netto</th>
+                                <th style="width:9%"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="entriesBody"></tbody>
+                    </table>
+                    <div class="totals-box" id="totalsBox"></div>
+                </div>
+            </div>
+        </div>
+
+        @* ── Tab: Rechnungen (nur Mahnung) ── *@
+        <div data-tabpanel="rechnungen" hidden>
+            <div class="card">
+                <div class="card-header"><div class="card-title">Gemahnte Rechnungen</div></div>
+                <div class="card-body">
+                    <div class="ent-list" id="reminderInvoiceList"></div>
+                    <div class="form-grid" style="margin-top:16px">
+                        <div class="field"><label>Mahnstufe</label>
+                            <select id="fReminderLevel">
+                                <option value="0">Zahlungserinnerung</option>
+                                <option value="1">1. Mahnung</option>
+                                <option value="2">2. Mahnung</option>
+                                <option value="3">3. Mahnung</option>
+                            </select>
+                        </div>
+                        <div class="field"><label>Zahlungsziel</label><input id="fReminderDueDate" type="date" /></div>
+                        <div class="field"><label>Mahngebühr €</label><input id="fReminderFee" type="number" step="0.01" min="0" /></div>
+                        <div class="field"><label>Verzugszinsen € (optional)</label><input id="fInterestAmount" type="number" step="0.01" min="0" /></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ── Tab: Details ── *@
+        <div data-tabpanel="details" hidden>
+            <div class="card">
+                <div class="card-header"><div class="card-title">Details</div></div>
+                <div class="card-body form-grid">
+                    <div class="field"><label>Belegdatum</label><input id="fDate" type="date" /></div>
+                    <div class="field" data-only="1,2"><label>Leistungsdatum</label><input id="fServiceDate" type="date" /></div>
+                    <div class="field" data-only="1,2"><label>Leistungszeitraum von</label><input id="fPeriodStart" type="date" /></div>
+                    <div class="field" data-only="1,2"><label>Leistungszeitraum bis</label><input id="fPeriodEnd" type="date" /></div>
+                    <div class="field" data-only="1"><label>Gültig bis</label><input id="fValidUntil" type="date" /></div>
+                    <div class="field" data-only="1"><label>Referenz</label><input id="fExternalReference" /></div>
+                    <div class="field"><label>Zahlungsziel (Tage)</label><input id="fPaymentTermDays" type="number" min="0" /></div>
+                    <div class="field"><label>Skonto-Frist (Tage)</label><input id="fPaymentTermDiscountDays" type="number" min="0" /></div>
+                    <div class="field"><label>Skonto %</label><input id="fDiscountRate" type="number" step="0.01" min="0" /></div>
+                    <div class="field"><label>Steuerbefreiung</label>
+                        <select id="fReverseChargeMode">
+                            <option value="0">Keine (USt ausweisen)</option>
+                            <option value="3">Kleinunternehmer (§6 Abs 1 Z 27 UStG)</option>
+                            <option value="1">Reverse Charge EU-B2B</option>
+                            <option value="2">Drittland (nicht steuerbar)</option>
+                        </select>
+                    </div>
+                    <div class="field span-2"><label>Hinweistext Steuerbefreiung (leer = Standard)</label><textarea id="fReverseChargeNote" rows="2"></textarea></div>
+                    <div class="field span-2" data-only="1"><label>Konditionen (unter der Positionstabelle gedruckt)</label><textarea id="fConditionNotes" rows="3"></textarea></div>
+                    <div class="field span-2"><label>Notiz</label><textarea id="fNote" rows="2"></textarea></div>
+                </div>
+            </div>
+        </div>
+
+        @* ── Tab: Vorschau ── *@
+        <div data-tabpanel="vorschau" hidden>
+            <div class="card card-body">
+                <div class="preview-wrap">
+                    <div class="preview-loading" id="previewLoading">PDF wird erzeugt …</div>
+                    <iframe class="preview-frame" id="previewFrame" title="Beleg-Vorschau"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── Aside: Status + Aktionen + Zahlungen ── *@
+    <aside>
+        <div class="card card-body">
+            <div class="sb-heading">Status</div>
+            <div id="asideStatus"></div>
+            <div class="meta-row" style="margin-top:10px"><span class="meta-label">Nummer</span><span class="meta-value num" id="asideNumber">–</span></div>
+            <div class="meta-row"><span class="meta-label">Brutto</span><span class="meta-value num" id="asideGross">–</span></div>
+        </div>
+
+        <div class="card card-body">
+            <div class="sb-heading">Aktionen</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+                <button class="btn btn-primary" type="button" id="btnSave">Speichern</button>
+                <button class="btn btn-accent" type="button" id="btnFinalize">Abschließen</button>
+                <a class="btn btn-secondary" id="btnDownload" hidden>PDF herunterladen</a>
+                <button class="btn btn-secondary" type="button" id="btnProcess" hidden>Weiterverarbeiten</button>
+                <button class="btn btn-secondary" type="button" id="btnUnlock" hidden>Entsperren</button>
+                <button class="btn btn-danger" type="button" id="btnDelete">Entwurf verwerfen</button>
+            </div>
+        </div>
+
+        <div class="card card-body" id="paymentsCard" hidden>
+            <div class="sb-heading">Zahlungen</div>
+            <div id="paymentsList"></div>
+            <button class="btn btn-secondary btn-sm" type="button" id="btnAddPayment" style="margin-top:10px">+ Zahlung erfassen</button>
+        </div>
+    </aside>
+</div>
+
+@* ── Modal: Originalrechnung wählen (Gutschrift/Storno/Mahnung) ── *@
+<div class="modal-scrim" id="pickInvoiceModal" hidden>
+    <div class="modal">
+        <div class="modal-header">
+            <div>
+                <div class="modal-eyebrow" id="pickInvoiceEyebrow">Beleg</div>
+                <div class="modal-title">Originalrechnung wählen</div>
+            </div>
+            <button class="modal-close" type="button" data-modal-close>×</button>
+        </div>
+        <div class="modal-body"><div class="pick-list" id="pickInvoiceList"></div></div>
+        <div class="modal-footer"><button class="btn btn-secondary" type="button" data-modal-close>Abbrechen</button></div>
+    </div>
+</div>
+
+@* ── Modal: Weiterverarbeiten ── *@
+<div class="modal-scrim" id="processModal" hidden>
+    <div class="modal">
+        <div class="modal-header">
+            <div>
+                <div class="modal-eyebrow">Weiterverarbeiten</div>
+                <div class="modal-title">Weiterverarbeiten zu …</div>
+            </div>
+            <button class="modal-close" type="button" data-modal-close>×</button>
+        </div>
+        <div class="modal-body">
+            <div class="t-sm t-muted" style="margin-bottom:12px">Erzeugt einen neuen Entwurf, vorausgefüllt mit Kopf und Positionen.</div>
+            <div class="type-targets">
+                <button class="type-target" type="button" data-process-target="2"><span class="ent-code">RE</span><span>Rechnung</span></button>
+                <button class="type-target" type="button" data-process-target="1"><span class="ent-code">AN</span><span>Angebot</span></button>
+                <button class="type-target" type="button" data-process-target="3"><span class="ent-code">GS</span><span>Gutschrift</span></button>
+                <button class="type-target" type="button" data-process-target="4"><span class="ent-code">SR</span><span>Stornorechnung</span></button>
+                <button class="type-target" type="button" data-process-target="5"><span class="ent-code">MA</span><span>Mahnung</span></button>
+            </div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-secondary" type="button" data-modal-close>Abbrechen</button></div>
+    </div>
+</div>
+
+@* ── Modal: Zahlung erfassen ── *@
+<div class="modal-scrim" id="paymentModal" hidden>
+    <div class="modal">
+        <div class="modal-header">
+            <div>
+                <div class="modal-eyebrow">Zahlungen</div>
+                <div class="modal-title">Zahlung erfassen</div>
+            </div>
+            <button class="modal-close" type="button" data-modal-close>×</button>
+        </div>
+        <div class="modal-body form-grid">
+            <div class="field"><label>Betrag € *</label><input id="pAmount" type="number" step="0.01" min="0.01" /></div>
+            <div class="field"><label>Zahldatum *</label><input id="pDate" type="date" /></div>
+            <div class="field"><label>Zahlungsweg</label>
+                <select id="pMethod">
+                    <option value="1">Überweisung</option>
+                    <option value="2">Bar</option>
+                    <option value="3">Karte</option>
+                    <option value="4">SEPA-Lastschrift</option>
+                    <option value="99">Sonstige</option>
+                </select>
+            </div>
+            <div class="field"><label>Referenz</label><input id="pReference" /></div>
+            <div class="field span-2"><label>Notiz</label><input id="pNote" /></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" type="button" data-modal-close>Abbrechen</button>
+            <button class="btn btn-primary" type="button" id="btnSavePayment">Erfassen</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/api.js" asp-append-version="true"></script>
+    <script src="~/js/billing-document.js" asp-append-version="true"></script>
+}
