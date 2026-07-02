@@ -4,7 +4,9 @@ using Fido2NetLib.Objects;
 using floQ.Domain.Identity;
 using floQ.Domain.Settings;
 using floQ.Domain.Tenants;
+using floQ.Web.AdminCenter;
 using floQ.Web.Data;
+using floQ.Web.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace floQ.Web.Auth;
@@ -16,12 +18,16 @@ namespace floQ.Web.Auth;
 /// - Beim ersten Begin-Register-Aufruf wird der User angelegt (falls Mail unbekannt).
 /// - Beim ersten Complete-Register-Aufruf wird zusätzlich ein Default-Tenant +
 ///   UserTenant + leeres CompanyProfile erzeugt (Auto-Provisioning Phase 1 Solo-Flow).
+///   Der Tenant bekommt dabei seinen Slug (= AC-ShortName) und der
+///   AdminCenter-Sync wird sofort angestoßen — der neue Abonnent erscheint
+///   damit unmittelbar als Instanz im AC (Auto-Discovery).
 /// - Folgeaufrufe (zweites Gerät, neuer Passkey) registrieren ein zusätzliches
 ///   Credential auf demselben User, ohne neuen Tenant.
 /// </summary>
 public class PasskeyService(
     IFido2 fido2,
-    AppDbContext db) : IPasskeyService
+    AppDbContext db,
+    IAdminCenterSyncTrigger acSyncTrigger) : IPasskeyService
 {
     public async Task<CredentialCreateOptions> BeginRegistrationAsync(
         string email, string displayName, CancellationToken ct)
@@ -97,7 +103,11 @@ public class PasskeyService(
         {
             var user = await db.Users.SingleAsync(u => u.Id == userId, ct);
 
-            var tenant = new Tenant { Name = user.Email };
+            var tenant = new Tenant
+            {
+                Name = user.Email,
+                Slug = await GenerateUniqueSlugAsync(user.Email, ct)
+            };
             db.Tenants.Add(tenant);
 
             db.UserTenants.Add(new UserTenant
@@ -118,6 +128,12 @@ public class PasskeyService(
         }
 
         await db.SaveChangesAsync(ct);
+
+        // Neuer Abonnent → AC-Sync sofort anstoßen, damit die Instanz per
+        // Auto-Discovery unmittelbar im AdminCenter erscheint.
+        if (!hasTenant)
+            acSyncTrigger.RequestSync();
+
         return userId;
     }
 
@@ -179,6 +195,18 @@ public class PasskeyService(
 
         await db.SaveChangesAsync(ct);
         return credential.UserId;
+    }
+
+    /// <summary>Slug aus dem Mail-Localpart, bei Kollision mit numerischem
+    /// Suffix (-2, -3, …). Läuft vor dem Insert — Restrisiko paralleler
+    /// Registrierungen fängt der Unique-Index auf Tenants.Slug ab.</summary>
+    private async Task<string> GenerateUniqueSlugAsync(string email, CancellationToken ct)
+    {
+        var baseSlug = TenantSlug.FromEmail(email);
+        var candidate = baseSlug;
+        for (var suffix = 2; await db.Tenants.AnyAsync(t => t.Slug == candidate, ct); suffix++)
+            candidate = TenantSlug.WithSuffix(baseSlug, suffix);
+        return candidate;
     }
 
     private static string NormalizeEmail(string email)

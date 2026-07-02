@@ -9,37 +9,42 @@ namespace floQ.Web.AdminCenter;
 
 /// <summary>
 /// BackgroundService: pullt periodisch den Plattform-Zustand vom
-/// batOSAdminCenter und spiegelt ihn in die lokalen Caches. Je Durchgang:
-/// 1. GET /api/global-settings → Shutoff-Zustand übernehmen
-///    (<see cref="PlatformStateService"/>), geänderte Assets per
-///    ETag/If-None-Match nachladen (<see cref="PlatformAsset"/>).
-/// 2. Katalog-Push (POST …/module-catalog), einmal je Prozess-Lauf —
-///    der Katalog ist statisch je Deploy.
-/// 3. GET …/subscriptions → Abo-Cache spiegeln (<see cref="EnabledModule"/>:
-///    aktive Keys upserten, nicht mehr gemeldete löschen) und das
-///    Modul-Gating neu laden (<see cref="ModuleGateService"/>).
+/// batOSAdminCenter — <b>je Tenant einmal</b>, denn jeder Tenant ist im AC
+/// eine eigene Instanz (ShortName = Tenant-Slug). Je Tenant und Durchgang:
+/// 1. GET /api/global-settings → Shutoff-Zustand des Tenants übernehmen
+///    (Felder am Tenant + <see cref="TenantShutoffService"/>); globale
+///    Assets nur beim ersten Tenant des Durchgangs (ETag/If-None-Match,
+///    <see cref="PlatformAsset"/>).
+/// 2. Katalog-Push (POST …/module-catalog), einmal je Tenant und
+///    Prozess-Lauf — der Katalog ist statisch je Deploy.
+/// 3. GET …/subscriptions → Abo-Cache des Tenants spiegeln
+///    (<see cref="EnabledModule"/>: aktive Keys upserten, nicht mehr
+///    gemeldete löschen), danach Gating neu laden.
 ///
 /// Bewusste Designentscheidungen (identisch zum batOS-Core-Pattern):
-/// - Push/Pull-Prinzip: Pull ist die einzige Wahrheitsquelle. Das AC pusht
-///   bei Änderungen nur einen datenlosen Anstoß auf POST /api/platform/sync
+/// - Push/Pull-Prinzip: Pull ist die einzige Wahrheitsquelle. Die AC-Pushes
+///   (sync/shutoff) tragen keine Instanz-Identität — alle Tenants teilen
+///   denselben Host — und wecken deshalb nur den Loop
 ///   (<see cref="IAdminCenterSyncTrigger"/>). Intervall = reiner Fallback.
-/// - Auto-Discovery: erster Pull legt die Instanz im AC an (Upsert per
-///   X-Instance-ShortName). Niemand pflegt Instanzen manuell.
-/// - Fehlertolerant: jeder Schritt fängt seine Exceptions selbst — ein
-///   AC-Ausfall kostet nie Konsistenz, die lokalen Caches bleiben gültig.
+/// - Auto-Discovery: der erste Pull mit einem neuen Slug legt die Instanz
+///   im AC an. Neue Registrierungen stoßen den Loop sofort an
+///   (PasskeyService → RequestSync) und erscheinen damit unmittelbar im AC.
+/// - Fehlertolerant: jeder Schritt und jeder Tenant fängt seine Exceptions
+///   selbst — ein AC-Ausfall kostet nie Konsistenz, die lokalen Caches
+///   bleiben gültig.
 /// </summary>
 public class AdminCenterSyncService(
     IServiceScopeFactory scopeFactory,
     IHttpClientFactory httpFactory,
     IOptions<AdminCenterOptions> options,
     IAdminCenterSyncTrigger trigger,
-    PlatformStateService platformState,
+    TenantShutoffService tenantShutoff,
     ModuleCatalog catalog,
     ModuleGateService moduleGate,
     ILogger<AdminCenterSyncService> log) : BackgroundService
 {
     private readonly AdminCenterOptions _options = options.Value;
-    private bool _catalogPushed;
+    private readonly HashSet<Guid> _catalogPushed = [];
 
     public const string HttpClientName = "AdminCenter";
 
@@ -47,7 +52,7 @@ public class AdminCenterSyncService(
     {
         if (!_options.IsConfigured)
         {
-            log.LogWarning("AdminCenter nicht konfiguriert (PlatformKey/ShortName leer) — Sync-Service bleibt untätig.");
+            log.LogWarning("AdminCenter nicht konfiguriert (PlatformKey leer) — Sync-Service bleibt untätig.");
             return;
         }
 
@@ -55,14 +60,14 @@ public class AdminCenterSyncService(
         try { await Task.Delay(TimeSpan.FromSeconds(30), ct); }
         catch (OperationCanceledException) { return; }
 
-        log.LogInformation("AdminCenter-Sync gestartet: {BaseUrl} als '{ShortName}' (Intervall {Interval}).",
-            _options.BaseUrl, _options.ShortName, _options.PullInterval);
+        log.LogInformation("AdminCenter-Sync gestartet: {BaseUrl}, eine Instanz je Tenant (Intervall {Interval}).",
+            _options.BaseUrl, _options.PullInterval);
 
         while (!ct.IsCancellationRequested)
         {
             try
             {
-                await PullOnceAsync(ct);
+                await PullAllTenantsAsync(ct);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
@@ -78,53 +83,86 @@ public class AdminCenterSyncService(
         }
     }
 
-    private async Task PullOnceAsync(CancellationToken ct)
+    private sealed record TenantRef(Guid Id, string Slug, string Name);
+
+    private async Task PullAllTenantsAsync(CancellationToken ct)
     {
-        var http = CreateClient();
+        List<TenantRef> tenants;
+        using (var scope = scopeFactory.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            tenants = await db.Tenants
+                .Where(t => t.Slug != "")
+                .Select(t => new TenantRef(t.Id, t.Slug, t.Name))
+                .ToListAsync(ct);
+        }
+
+        var assetsProcessed = false;
+        foreach (var tenant in tenants)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                await PullTenantAsync(tenant, processAssets: !assetsProcessed, ct);
+                assetsProcessed = true;
+            }
+            catch (Exception ex)
+            {
+                log.LogWarning(ex, "AdminCenter-Pull für Tenant '{Slug}' fehlgeschlagen — Cache bleibt.", tenant.Slug);
+            }
+        }
+    }
+
+    private async Task PullTenantAsync(TenantRef tenant, bool processAssets, CancellationToken ct)
+    {
+        var http = CreateClient(tenant);
 
         var resp = await http.GetAsync("/api/global-settings", ct);
         if (!resp.IsSuccessStatusCode)
         {
-            log.LogWarning("AdminCenter /api/global-settings → {Status}", (int)resp.StatusCode);
+            log.LogWarning("AdminCenter /api/global-settings ({Slug}) → {Status}", tenant.Slug, (int)resp.StatusCode);
             return;
         }
 
         using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync(ct));
         if (!doc.RootElement.TryGetProperty("data", out var data)) return;
 
-        await ProcessShutoffAsync(data, ct);
+        await ProcessShutoffAsync(tenant, data, ct);
 
         // Folgeschritte fangen ihre Fehler selbst — ein kaputter Schritt darf
         // die anderen nicht mitreißen (Shutoff ist bereits verarbeitet).
-        try
+        if (processAssets)
         {
-            await ProcessAssetsAsync(http, data, ct);
-        }
-        catch (Exception ex)
-        {
-            log.LogWarning(ex, "AdminCenter-Sync: Asset-Abgleich fehlgeschlagen — Cache bleibt.");
-        }
-
-        try
-        {
-            await PushCatalogOnceAsync(http, ct);
-        }
-        catch (Exception ex)
-        {
-            log.LogWarning(ex, "AdminCenter-Sync: Katalog-Push fehlgeschlagen — Retry beim nächsten Pull.");
+            try
+            {
+                await ProcessAssetsAsync(http, data, ct);
+            }
+            catch (Exception ex)
+            {
+                log.LogWarning(ex, "AdminCenter-Sync: Asset-Abgleich fehlgeschlagen — Cache bleibt.");
+            }
         }
 
         try
         {
-            await SyncSubscriptionsAsync(http, ct);
+            await PushCatalogOnceAsync(http, tenant, ct);
         }
         catch (Exception ex)
         {
-            log.LogWarning(ex, "AdminCenter-Sync: Abo-Sync fehlgeschlagen — alter Abo-Cache bleibt gültig.");
+            log.LogWarning(ex, "AdminCenter-Sync: Katalog-Push ({Slug}) fehlgeschlagen — Retry beim nächsten Pull.", tenant.Slug);
+        }
+
+        try
+        {
+            await SyncSubscriptionsAsync(http, tenant, ct);
+        }
+        catch (Exception ex)
+        {
+            log.LogWarning(ex, "AdminCenter-Sync: Abo-Sync ({Slug}) fehlgeschlagen — alter Abo-Cache bleibt gültig.", tenant.Slug);
         }
     }
 
-    private async Task ProcessShutoffAsync(JsonElement data, CancellationToken ct)
+    private async Task ProcessShutoffAsync(TenantRef tenant, JsonElement data, CancellationToken ct)
     {
         if (!data.TryGetProperty("shutoff", out var so)) return;
 
@@ -132,24 +170,30 @@ public class AdminCenterSyncService(
         var reason = so.TryGetProperty("reason", out var r) ? r.GetString() ?? "" : "";
         var at = so.TryGetProperty("at", out var t) && t.ValueKind == JsonValueKind.String ? t.GetString() ?? "" : "";
 
-        if (platformState.ShutoffActive == active
-            && platformState.ShutoffReason == reason
-            && platformState.ShutoffAt == at)
-            return;
-
         using var scope = scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await platformState.WriteShutoffAsync(db, active, reason, at, ct);
+        var row = await db.Tenants.SingleOrDefaultAsync(x => x.Id == tenant.Id, ct);
+        if (row is null) return;
+
+        if (row.ShutoffActive == active && row.ShutoffReason == reason && row.ShutoffAt == at)
+            return;
+
+        row.ShutoffActive = active;
+        row.ShutoffReason = reason;
+        row.ShutoffAt = at;
+        await db.SaveChangesAsync(ct);
+        tenantShutoff.Reload();
 
         if (active)
-            log.LogWarning("AdminCenter-Shutoff AKTIV: '{Reason}'", reason);
+            log.LogWarning("AdminCenter-Shutoff AKTIV für Tenant '{Slug}': '{Reason}'", tenant.Slug, reason);
         else
-            log.LogInformation("AdminCenter-Shutoff aufgehoben.");
+            log.LogInformation("AdminCenter-Shutoff für Tenant '{Slug}' aufgehoben.", tenant.Slug);
     }
 
     /// <summary>Gleicht alle in global-settings gelisteten Assets ab: GET mit
     /// If-None-Match, bei 304 unverändert, bei 200 Bytes + ETag in den
-    /// <see cref="PlatformAsset"/>-Cache.</summary>
+    /// <see cref="PlatformAsset"/>-Cache. Assets sind global je Software —
+    /// ein Abgleich je Durchgang genügt.</summary>
     private async Task ProcessAssetsAsync(HttpClient http, JsonElement data, CancellationToken ct)
     {
         if (!data.TryGetProperty("assets", out var assets) || assets.ValueKind != JsonValueKind.Array)
@@ -205,12 +249,15 @@ public class AdminCenterSyncService(
     }
 
     /// <summary>Meldet dem AC den Modul-Katalog dieser Code-Version (Replace-
-    /// Semantik: das AC kennt danach exakt diese Keys). Einmal je Prozess-Lauf
-    /// — der Katalog ist statisch je Deploy. Non-2xx wird still behandelt
-    /// (loggen, weiterlaufen), Retry beim nächsten Pull.</summary>
-    private async Task PushCatalogOnceAsync(HttpClient http, CancellationToken ct)
+    /// Semantik: das AC kennt danach exakt diese Keys). Einmal je Tenant und
+    /// Prozess-Lauf — der Katalog ist statisch je Deploy. Non-2xx wird still
+    /// behandelt (loggen, weiterlaufen), Retry beim nächsten Pull.</summary>
+    private async Task PushCatalogOnceAsync(HttpClient http, TenantRef tenant, CancellationToken ct)
     {
-        if (_catalogPushed) return;
+        lock (_catalogPushed)
+        {
+            if (_catalogPushed.Contains(tenant.Id)) return;
+        }
 
         var payload = new
         {
@@ -229,28 +276,30 @@ public class AdminCenterSyncService(
         };
 
         using var resp = await http.PostAsJsonAsync(
-            $"/api/instances/{_options.ShortName}/module-catalog", payload, ct);
+            $"/api/instances/{tenant.Slug}/module-catalog", payload, ct);
 
         if (resp.IsSuccessStatusCode)
         {
-            _catalogPushed = true;
-            log.LogInformation("AdminCenter: Modul-Katalog gepusht ({Count} Einträge).", payload.modules.Count);
+            lock (_catalogPushed) { _catalogPushed.Add(tenant.Id); }
+            log.LogInformation("AdminCenter: Modul-Katalog gepusht ({Slug}, {Count} Einträge).",
+                tenant.Slug, payload.modules.Count);
         }
         else
         {
-            log.LogWarning("AdminCenter /module-catalog → {Status}", (int)resp.StatusCode);
+            log.LogWarning("AdminCenter /module-catalog ({Slug}) → {Status}", tenant.Slug, (int)resp.StatusCode);
         }
     }
 
-    /// <summary>Holt die aktive Abo-Liste vom AC und spiegelt sie in den
-    /// lokalen <see cref="EnabledModule"/>-Cache (batOS-Semantik: aktive Keys
-    /// upserten, nicht mehr gemeldete löschen). Danach Gating neu laden.</summary>
-    private async Task SyncSubscriptionsAsync(HttpClient http, CancellationToken ct)
+    /// <summary>Holt die aktive Abo-Liste des Tenants vom AC und spiegelt sie
+    /// in den lokalen <see cref="EnabledModule"/>-Cache (batOS-Semantik:
+    /// aktive Keys upserten, nicht mehr gemeldete löschen). Danach Gating
+    /// neu laden.</summary>
+    private async Task SyncSubscriptionsAsync(HttpClient http, TenantRef tenant, CancellationToken ct)
     {
-        var resp = await http.GetAsync($"/api/instances/{_options.ShortName}/subscriptions", ct);
+        var resp = await http.GetAsync($"/api/instances/{tenant.Slug}/subscriptions", ct);
         if (!resp.IsSuccessStatusCode)
         {
-            log.LogWarning("AdminCenter /subscriptions → {Status}", (int)resp.StatusCode);
+            log.LogWarning("AdminCenter /subscriptions ({Slug}) → {Status}", tenant.Slug, (int)resp.StatusCode);
             return;
         }
 
@@ -277,7 +326,9 @@ public class AdminCenterSyncService(
         using var scope = scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var now = DateTime.UtcNow;
-        var existing = await db.EnabledModules.ToListAsync(ct);
+        var existing = await db.EnabledModules
+            .Where(e => e.TenantId == tenant.Id)
+            .ToListAsync(ct);
 
         var added = active
             .Where(key => !existing.Any(e => string.Equals(e.Key, key, StringComparison.OrdinalIgnoreCase)))
@@ -289,7 +340,7 @@ public class AdminCenterSyncService(
         foreach (var row in existing.Except(removed))
             row.LastSeenActiveAtUtc = now;
         foreach (var key in added)
-            db.EnabledModules.Add(new EnabledModule { Key = key, LastSeenActiveAtUtc = now });
+            db.EnabledModules.Add(new EnabledModule { TenantId = tenant.Id, Key = key, LastSeenActiveAtUtc = now });
         db.EnabledModules.RemoveRange(removed);
 
         await db.SaveChangesAsync(ct);
@@ -297,22 +348,29 @@ public class AdminCenterSyncService(
 
         if (added.Count > 0 || removed.Count > 0)
         {
-            log.LogInformation("AdminCenter-Abo-Sync: +{Added} -{Removed} (aktiv: {Keys})",
-                added.Count, removed.Count, string.Join(", ", active));
+            log.LogInformation("AdminCenter-Abo-Sync ({Slug}): +{Added} -{Removed} (aktiv: {Keys})",
+                tenant.Slug, added.Count, removed.Count, string.Join(", ", active));
         }
     }
 
-    private HttpClient CreateClient()
+    private HttpClient CreateClient(TenantRef tenant)
     {
         var http = httpFactory.CreateClient(HttpClientName);
         http.BaseAddress = new Uri(_options.BaseUrl);
         http.Timeout = TimeSpan.FromSeconds(15);
         http.DefaultRequestHeaders.Add("X-Platform-Key", _options.PlatformKey);
-        http.DefaultRequestHeaders.Add("X-Instance-ShortName", _options.ShortName);
+        http.DefaultRequestHeaders.Add("X-Instance-ShortName", tenant.Slug);
         if (!string.IsNullOrWhiteSpace(_options.Host))
             http.DefaultRequestHeaders.Add("X-Instance-Host", _options.Host);
-        if (!string.IsNullOrWhiteSpace(_options.DisplayName))
-            http.DefaultRequestHeaders.Add("X-Instance-DisplayName", _options.DisplayName);
+        var displayName = ToHeaderSafe(tenant.Name);
+        if (!string.IsNullOrWhiteSpace(displayName))
+            http.DefaultRequestHeaders.Add("X-Instance-DisplayName", displayName);
         return http;
     }
+
+    /// <summary>HTTP-Header erlauben kein Nicht-ASCII — Tenant-Namen können
+    /// aber Umlaute enthalten. Nicht darstellbare Zeichen werden ersetzt,
+    /// statt den Sync des Tenants an einer Header-Exception sterben zu lassen.</summary>
+    private static string ToHeaderSafe(string value) =>
+        string.Concat(value.Select(c => c < 128 && !char.IsControl(c) ? c : '?')).Trim();
 }

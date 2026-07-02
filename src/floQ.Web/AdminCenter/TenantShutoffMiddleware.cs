@@ -1,45 +1,38 @@
+using floQ.Web.Tenancy;
+
 namespace floQ.Web.AdminCenter;
 
 /// <summary>
-/// Wartungs-Gate. Wenn das AC die floQ-Instanz stillgelegt hat, blockt
-/// diese Middleware alle Requests mit HTTP 503 + Wartungsseite.
+/// Wartungs-Gate je Mandant. Hat das AC den Tenant des aktuellen Requests
+/// stillgelegt, antwortet diese Middleware mit HTTP 503 + Wartungsseite —
+/// nur für diesen Tenant, alle anderen laufen normal weiter.
 ///
-/// Ausgenommen (immer durchgelassen):
-/// - /api/admincenter/* — Reaktivierungs-Webhook vom AC.
-/// - /api/platform/*    — Sync-Anstoß vom AC.
-/// - Static-Assets (css/js/img) + favicon/robots.
-///
-/// Reihenfolge: vor UseAuthentication, damit Logins beim Shutoff sofort
-/// abgelehnt werden.
+/// Reihenfolge: NACH UseTenantResolver (braucht den aufgelösten Tenant).
+/// Anonyme Requests (Landing, Login, AC-Endpoints) haben keinen Tenant und
+/// passieren ungehindert — ein stillgelegter Kunde kann sich also noch
+/// einloggen, sieht danach aber ausschließlich die Wartungsseite.
+/// /auth/logout bleibt erreichbar, damit er die Sitzung beenden kann.
 /// </summary>
-public class AdminCenterShutoffMiddleware(RequestDelegate next)
+public class TenantShutoffMiddleware(RequestDelegate next)
 {
-    private static readonly string[] ExemptPrefixes =
+    public async Task InvokeAsync(
+        HttpContext ctx, ITenantContext tenantContext, TenantShutoffService shutoff)
     {
-        "/api/admincenter/",
-        "/api/platform/",
-        "/img/",
-        "/css/",
-        "/js/"
-    };
+        if (!tenantContext.IsResolved)
+        {
+            await next(ctx);
+            return;
+        }
 
-    public async Task InvokeAsync(HttpContext ctx, PlatformStateService state)
-    {
-        if (!state.ShutoffActive)
+        var state = shutoff.Get(tenantContext.TenantId);
+        if (state is null)
         {
             await next(ctx);
             return;
         }
 
         var path = ctx.Request.Path.Value ?? "";
-        foreach (var prefix in ExemptPrefixes)
-            if (path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            {
-                await next(ctx);
-                return;
-            }
-        if (string.Equals(path, "/favicon.ico", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(path, "/robots.txt", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(path, "/auth/logout", StringComparison.OrdinalIgnoreCase))
         {
             await next(ctx);
             return;
@@ -49,8 +42,8 @@ public class AdminCenterShutoffMiddleware(RequestDelegate next)
         ctx.Response.Headers.RetryAfter = "3600";
         ctx.Response.ContentType = "text/html; charset=utf-8";
 
-        var reason = System.Net.WebUtility.HtmlEncode(state.ShutoffReason);
-        var since = System.Net.WebUtility.HtmlEncode(state.ShutoffAt);
+        var reason = System.Net.WebUtility.HtmlEncode(state.Reason);
+        var since = System.Net.WebUtility.HtmlEncode(state.At);
 
         await ctx.Response.WriteAsync($@"<!DOCTYPE html>
 <html lang=""de""><head><meta charset=""utf-8""><meta name=""viewport"" content=""width=device-width, initial-scale=1"">
@@ -68,16 +61,16 @@ p {{ color: #6b6b6b; line-height: 1.6; }}
 </style></head>
 <body><main>
   <div class=""wordmark"">flo<span class=""q"">Q</span></div>
-  <h1>Vorübergehend nicht verfügbar.</h1>
-  <p>Bitte versuchen Sie es später erneut.</p>
+  <h1>Dieser Zugang ist vorübergehend nicht verfügbar.</h1>
+  <p>Bitte versuchen Sie es später erneut. <a href=""/auth/logout"" style=""color:#B08D57;"">Abmelden</a></p>
   {(string.IsNullOrEmpty(reason) ? "" : $@"<div class=""reason""><div class=""reason-label"">Grund</div><div>{reason}</div></div>")}
   <div class=""footer"">Status seit: {since} UTC</div>
 </main></body></html>");
     }
 }
 
-public static class AdminCenterShutoffMiddlewareExtensions
+public static class TenantShutoffMiddlewareExtensions
 {
-    public static IApplicationBuilder UseAdminCenterShutoff(this IApplicationBuilder app)
-        => app.UseMiddleware<AdminCenterShutoffMiddleware>();
+    public static IApplicationBuilder UseTenantShutoff(this IApplicationBuilder app)
+        => app.UseMiddleware<TenantShutoffMiddleware>();
 }

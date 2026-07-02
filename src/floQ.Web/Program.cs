@@ -83,7 +83,7 @@ builder.Services.Configure<AdminCenterOptions>(
     builder.Configuration.GetSection(AdminCenterOptions.SectionName));
 builder.Services.AddHttpClient(AdminCenterSyncService.HttpClientName);
 builder.Services.AddSingleton<IAdminCenterSyncTrigger, AdminCenterSyncTrigger>();
-builder.Services.AddSingleton<PlatformStateService>();
+builder.Services.AddSingleton<TenantShutoffService>();
 builder.Services.AddSingleton<ModuleCatalog>();
 builder.Services.AddSingleton<ModuleGateService>();
 builder.Services.AddHostedService<AdminCenterSyncService>();
@@ -102,7 +102,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Shutoff- und Abo-Cache aus der DB laden (Zustand überlebt Neustarts).
-app.Services.GetRequiredService<PlatformStateService>().Reload();
+app.Services.GetRequiredService<TenantShutoffService>().Reload();
 app.Services.GetRequiredService<ModuleGateService>().Reload();
 
 if (!app.Environment.IsDevelopment())
@@ -113,17 +113,18 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Shutoff-Gate: vor Routing/Auth, damit stillgelegte Instanzen sofort 503 liefern.
-app.UseAdminCenterShutoff();
-
-// Modul-Gate: nicht abonnierte Modul-Routen → 503 (Basis: lokaler Abo-Cache).
-app.UseModuleGate();
-
 app.UseRouting();
 
 app.UseSession();
 app.UseAuthentication();
 app.UseTenantResolver();   // muss NACH UseAuthentication, VOR allem mit DbContext-Zugriff
+
+// Shutoff-Gate je Tenant: stillgelegte Mandanten sehen nur die Wartungsseite.
+app.UseTenantShutoff();
+
+// Modul-Gate: nicht abonnierte Modul-Routen → 503 (Basis: lokaler Abo-Cache).
+app.UseModuleGate();
+
 app.UseAuthorization();
 
 app.MapStaticAssets();

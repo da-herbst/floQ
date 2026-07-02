@@ -39,8 +39,7 @@ public class AppDbContext(
     // Tenant-Schicht (auto-isoliert)
     public DbSet<CompanyProfile> CompanyProfiles => Set<CompanyProfile>();
 
-    // Deployment-Schicht (Singleton-State, AC-Cache)
-    public DbSet<PlatformState> PlatformStates => Set<PlatformState>();
+    // Plattform-Schicht (AC-Cache: Abos je Tenant, globale Assets)
     public DbSet<EnabledModule> EnabledModules => Set<EnabledModule>();
     public DbSet<PlatformAsset> PlatformAssets => Set<PlatformAsset>();
 
@@ -72,6 +71,9 @@ public class AppDbContext(
         {
             b.HasKey(t => t.Id);
             b.Property(t => t.Name).HasMaxLength(256).IsRequired();
+            // Slug = ShortName der AC-Instanz (lowercase, ≤ 32, unique).
+            b.Property(t => t.Slug).HasMaxLength(32).IsRequired();
+            b.HasIndex(t => t.Slug).IsUnique();
         });
 
         modelBuilder.Entity<UserTenant>(b =>
@@ -215,17 +217,10 @@ public class AppDbContext(
             b.HasIndex(li => new { li.TenantId, li.Key, li.DocumentType }).IsUnique();
         });
 
-        // ---- Deployment-Schicht ----
-        modelBuilder.Entity<PlatformState>(b =>
-        {
-            b.HasKey(s => s.Id);
-            // Singleton-Row: Id wird explizit gesetzt (SingletonId=1), nie generiert.
-            b.Property(s => s.Id).ValueGeneratedNever();
-        });
-
+        // ---- Plattform-Schicht (AC-Cache) ----
         modelBuilder.Entity<EnabledModule>(b =>
         {
-            b.HasKey(e => e.Key);
+            b.HasKey(e => new { e.TenantId, e.Key });
             b.Property(e => e.Key).HasMaxLength(64);
         });
 

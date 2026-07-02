@@ -2,21 +2,25 @@ namespace floQ.Web.AdminCenter;
 
 /// <summary>
 /// Verbindung zum batOSAdminCenter (zentrale Abo-Verwaltung aller
-/// 5050-Software-Produkte). floQ meldet sich dort als Produkt "floq" an;
-/// das AC verwaltet Abos der floQ-Kunden und kann die Instanz stilllegen.
+/// 5050-Software-Produkte). floQ meldet sich dort als Produkt "floq" an —
+/// und zwar mit <b>jedem Tenant als eigener AC-Instanz</b>: der Tenant-Slug
+/// ist der AC-ShortName. So sieht der Hersteller jeden registrierten
+/// Abonnenten im AC und schaltet Abos/Shutoff pro Kunde.
 ///
 /// Vertrag identisch zum batOS-Core-Pattern (Push/Pull-Prinzip):
-/// - floQ pullt periodisch den Zustand (Pull = einzige Wahrheitsquelle,
-///   AC-Ausfall kostet nie Konsistenz, nur Latenz — letzter Cache gilt).
+/// - floQ pullt periodisch je Tenant den Zustand (Pull = einzige
+///   Wahrheitsquelle, AC-Ausfall kostet nie Konsistenz, nur Latenz —
+///   letzter Cache gilt).
 /// - AC pusht bei Änderungen einen datenlosen Anstoß auf
-///   POST /api/platform/sync, der den nächsten Pull sofort auslöst.
-/// - Sofort-Shutoff via POST /api/admincenter/shutoff.
+///   POST /api/platform/sync bzw. POST /api/admincenter/shutoff. Beide
+///   tragen keine Instanz-Identität (alle Tenants teilen denselben Host)
+///   und werden daher nur als Trigger fürs sofortige Pullen behandelt.
 ///
-/// Auth: shared PlatformKey im Header X-Platform-Key, dazu
-/// X-Instance-ShortName / X-Instance-Host / X-Instance-DisplayName.
+/// Auth: shared PlatformKey im Header X-Platform-Key, dazu je Tenant
+/// X-Instance-ShortName (= Slug) / X-Instance-Host / X-Instance-DisplayName.
 ///
-/// Wenn PlatformKey oder ShortName leer sind, läuft floQ normal weiter —
-/// der Sync-Service loggt eine Warnung und bleibt untätig (Dev-Betrieb).
+/// Wenn PlatformKey leer ist, läuft floQ normal weiter — der Sync-Service
+/// loggt eine Warnung und bleibt untätig (Dev-Betrieb).
 /// </summary>
 public class AdminCenterOptions
 {
@@ -25,16 +29,10 @@ public class AdminCenterOptions
     public string BaseUrl { get; set; } = "https://admin.batos.at";
     public string PlatformKey { get; set; } = "";
 
-    /// <summary>Instanz-Identifier im AC — der stabile Mandanten-Schlüssel
-    /// (lowercase, ≤ 32, unique innerhalb der Software "floq"). Im AC-Modell
-    /// läuft jeder floQ-Mandant als eigene Instanz (eigener Stack, eigene
-    /// Domain); ShortName/Host/DisplayName kommen per ENV aus dem Deploy des
-    /// jeweiligen Mandanten. Das aktuelle Single-Deployment floq.at ist die
-    /// Instanz "floq" (Default aus appsettings).</summary>
-    public string ShortName { get; set; } = "";
-
+    /// <summary>Öffentliche Domain dieses Deployments OHNE Schema
+    /// (z.B. "floq.at") — dorthin feuert das AC seine Pushes. Gilt für
+    /// alle Tenant-Instanzen gemeinsam.</summary>
     public string Host { get; set; } = "";
-    public string DisplayName { get; set; } = "";
 
     /// <summary>Intervall zwischen Pulls. Reiner Fallback — Änderungen
     /// kommen primär per AC-Push sofort an.</summary>
@@ -42,6 +40,5 @@ public class AdminCenterOptions
 
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(BaseUrl)
-        && !string.IsNullOrWhiteSpace(PlatformKey)
-        && !string.IsNullOrWhiteSpace(ShortName);
+        && !string.IsNullOrWhiteSpace(PlatformKey);
 }

@@ -1,5 +1,4 @@
 using System.Text.Json;
-using floQ.Web.Data;
 using Microsoft.Extensions.Options;
 
 namespace floQ.Web.AdminCenter;
@@ -9,8 +8,13 @@ namespace floQ.Web.AdminCenter;
 ///
 /// - POST /api/platform/sync       — datenloser Sync-Anstoß (AC → floQ),
 ///                                   weckt den Pull-Loop sofort.
-/// - POST /api/admincenter/shutoff — Sofort-Shutoff/-Reaktivierung mit
-///                                   Body {active, reason, at}.
+/// - POST /api/admincenter/shutoff — Shutoff-Webhook. Trägt keine Instanz-
+///                                   Identität (alle Tenants teilen den
+///                                   Host floq.at), darum wird er NICHT als
+///                                   Zustand übernommen, sondern nur als
+///                                   Anstoß behandelt: der sofortige Pull
+///                                   holt den Shutoff-Zustand je Tenant aus
+///                                   global-settings (Quelle der Wahrheit).
 /// - GET  /health                  — Liveness für Deploy-Verify.
 /// - GET  /__subscription          — Status-Ping (aktiv + Version).
 ///
@@ -36,22 +40,29 @@ public static class AdminCenterEndpoints
         app.MapPost("/api/admincenter/shutoff", async (
             HttpContext ctx,
             IOptions<AdminCenterOptions> opts,
-            AppDbContext db,
-            PlatformStateService state,
-            ILogger<PlatformStateService> log,
+            IAdminCenterSyncTrigger trigger,
+            ILogger<AdminCenterSyncTrigger> log,
             CancellationToken ct) =>
         {
             if (!ValidateKey(ctx, opts.Value, log)) return Results.Unauthorized();
 
-            using var doc = await JsonDocument.ParseAsync(ctx.Request.Body, cancellationToken: ct);
-            var root = doc.RootElement;
-            var active = root.TryGetProperty("active", out var a) && a.ValueKind == JsonValueKind.True;
-            var reason = root.TryGetProperty("reason", out var r) ? r.GetString() ?? "" : "";
-            var at = root.TryGetProperty("at", out var t) && t.ValueKind == JsonValueKind.String ? t.GetString() ?? "" : "";
+            // Body nur fürs Log lesen — die Wahrheit holt der Pull je Tenant.
+            var active = false;
+            var reason = "";
+            try
+            {
+                using var doc = await JsonDocument.ParseAsync(ctx.Request.Body, cancellationToken: ct);
+                active = doc.RootElement.TryGetProperty("active", out var a) && a.ValueKind == JsonValueKind.True;
+                reason = doc.RootElement.TryGetProperty("reason", out var r) ? r.GetString() ?? "" : "";
+            }
+            catch (JsonException)
+            {
+                // Datenlos/kaputt ist egal — der Anstoß zählt.
+            }
 
-            await state.WriteShutoffAsync(db, active, reason, at, ct);
-
-            log.LogWarning("AdminCenter-Shutoff-Webhook: active={Active}, reason='{Reason}'", active, reason);
+            trigger.RequestSync();
+            log.LogWarning("AdminCenter-Shutoff-Webhook (active={Active}, reason='{Reason}') — Sofort-Pull ausgelöst.",
+                active, reason);
             return Results.Ok(new { success = true, data = (object?)null, errorMessage = (string?)null });
         }).AllowAnonymous();
 
