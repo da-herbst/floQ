@@ -135,6 +135,7 @@ builder.Services.AddSingleton<IAdminCenterSyncTrigger, AdminCenterSyncTrigger>()
 builder.Services.AddSingleton<TenantShutoffService>();
 builder.Services.AddSingleton<ModuleCatalog>();
 builder.Services.AddSingleton<ModuleGateService>();
+builder.Services.AddScoped<TenantLifecycleService>();
 builder.Services.AddHostedService<AdminCenterSyncService>();
 
 var app = builder.Build();
@@ -186,6 +187,7 @@ app.MapRazorPages()
    .WithStaticAssets();
 
 app.MapAdminCenterEndpoints();
+app.MapAdminCenterTenantEndpoints();
 app.MapAccountSubscriptionEndpoints();
 
 // REST-API v1 (API-First: die Razor Pages sind reine Consumer).

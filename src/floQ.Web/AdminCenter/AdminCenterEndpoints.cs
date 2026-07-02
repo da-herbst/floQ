@@ -135,8 +135,10 @@ public static class AdminCenterEndpoints
     private static string? NullIfEmpty(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value;
 
-    /// <summary>Constant-time-Vergleich des X-Platform-Key-Headers.</summary>
-    private static bool ValidateKey(HttpContext ctx, AdminCenterOptions opts, ILogger log)
+    /// <summary>Constant-time-Vergleich des X-Platform-Key-Headers.
+    /// Internal: auch die Lebenszyklus-Endpoints (AdminCenterTenantEndpoints)
+    /// authentifizieren damit.</summary>
+    internal static bool ValidateKey(HttpContext ctx, AdminCenterOptions opts, ILogger log)
     {
         var expected = opts.PlatformKey;
         if (string.IsNullOrEmpty(expected))

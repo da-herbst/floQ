@@ -54,4 +54,13 @@ public class UploadStorage(IConfiguration config, IWebHostEnvironment env)
 
     public bool Exists(Guid tenantId, string relativePath)
         => File.Exists(Resolve(tenantId, relativePath));
+
+    /// <summary>Komplettes Tenant-Root löschen (Mandanten-Löschung via
+    /// AdminCenter). Idempotent — fehlendes Verzeichnis ist kein Fehler.</summary>
+    public void DeleteTenantRoot(Guid tenantId)
+    {
+        var tenantRoot = Path.Combine(_basePath, tenantId.ToString());
+        if (Directory.Exists(tenantRoot))
+            Directory.Delete(tenantRoot, recursive: true);
+    }
 }
