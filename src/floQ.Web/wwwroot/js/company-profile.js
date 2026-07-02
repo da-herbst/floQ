@@ -14,7 +14,7 @@
     }
 
     function renderLetterhead(has) {
-        $('letterheadStatus').textContent = has ? 'hinterlegt' : 'keines';
+        $('letterheadStatus').textContent = has ? '● HINTERLEGT' : '○ KEINES';
         $('btnDeleteLetterhead').hidden = !has;
     }
 
@@ -57,7 +57,10 @@
     });
 
     $('btnDeleteLetterhead').addEventListener('click', async () => {
-        if (!confirm('Briefpapier entfernen? Belege werden ohne Hintergrund gerendert.')) return;
+        if (!await floqConfirm({
+            eyebrow: 'Briefpapier', title: 'Briefpapier entfernen?', confirm: 'Entfernen',
+            text: 'Belege werden künftig ohne Hintergrund gerendert.',
+        })) return;
         try {
             await floqApi.del('/api/v1/company-profile/letterhead');
             renderLetterhead(false);

@@ -4,7 +4,6 @@
     const TYPE_CODE = { 1: 'AN', 2: 'RE', 3: 'GS', 4: 'SR', 5: 'MA' };
     const TYPE_LABEL = { 1: 'Angebot', 2: 'Rechnung', 3: 'Gutschrift', 4: 'Stornorechnung', 5: 'Mahnung' };
     const STATUS_LABEL = { 0: 'Entwurf', 1: 'Abgeschlossen', 2: 'Versendet', 3: 'Gesehen', 4: 'Storniert' };
-    const STATUS_TONE = { 0: 'warn', 1: 'ok', 2: 'info', 3: 'neutral', 4: 'danger' };
 
     let rows = [];
     const activeTypes = new Set();
@@ -38,15 +37,6 @@
         return parts.join(' · ');
     }
 
-    function clientChip(name) {
-        const compact = name.replace(/\s/g, '');
-        const initials = compact.length >= 2 ? compact.substring(0, 2).toUpperCase() : (compact || '–').toUpperCase();
-        return h('span', { class: 'client-chip', title: name }, [
-            h('span', { class: 'client-chip-av' }, initials),
-            h('span', { class: 'client-chip-lbl' }, name),
-        ]);
-    }
-
     function renderList() {
         const filtered = rows.filter(r => activeTypes.has(r.type) && activeStatuses.has(r.status));
 
@@ -54,13 +44,11 @@
             h('div', { class: 'ent-row', onclick: () => window.location.href = `/Billing/Document?id=${r.id}` }, [
                 h('span', { class: 'ent-code', title: TYPE_LABEL[r.type] }, TYPE_CODE[r.type]),
                 h('div', { class: 'ent-main' }, [
-                    h('div', { class: 'ent-name' }, [
-                        h('span', { class: 'num' }, r.number || 'Entwurf'),
-                        r.customerName && r.customerName !== '–' ? clientChip(r.customerName) : null,
-                    ]),
+                    h('div', { class: 'ent-number' }, r.number || 'Entwurf'),
                     h('div', { class: 'ent-meta' }, metaLine(r)),
                 ]),
-                h('span', {}, h('span', { class: `badge badge-${STATUS_TONE[r.status]}` }, [h('span', { class: 'dot' }), STATUS_LABEL[r.status]])),
+                h('div', { class: 'ent-customer' }, r.customerName && r.customerName !== '–' ? r.customerName : ''),
+                floqStatusEl(r.status),
                 h('span', { class: `ent-amount num${r.gross === 0 ? ' is-zero' : ''}` }, floqFmt.money(r.gross)),
             ]));
 
@@ -74,16 +62,16 @@
         document.getElementById('sumGross').textContent = floqFmt.money(filtered.reduce((s, r) => s + r.gross, 0));
     }
 
-    function pill(label, count, set, key) {
+    function filterItem(label, count, set, key) {
         const el = h('button', {
-            class: 'pill' + (set.has(key) ? ' is-active' : ''),
+            class: 'filter-item' + (set.has(key) ? ' is-active' : ''),
             type: 'button',
             onclick: () => {
                 if (set.has(key)) set.delete(key); else set.add(key);
                 el.classList.toggle('is-active');
                 renderList();
             },
-        }, [label, ' ', h('span', { class: 'pill-count' }, String(count))]);
+        }, [h('span', { class: 'fi-label' }, label), h('span', {}, String(count))]);
         return el;
     }
 
@@ -91,9 +79,9 @@
         const types = [...new Set(rows.map(r => r.type))].sort((a, b) => a - b);
         const statuses = [...new Set(rows.map(r => r.status))].sort((a, b) => a - b);
         hFill(document.getElementById('typePills'),
-            types.map(t => pill(`${TYPE_CODE[t]} · ${TYPE_LABEL[t]}`, rows.filter(r => r.type === t).length, activeTypes, t)));
+            types.map(t => filterItem(`${TYPE_CODE[t]} ${TYPE_LABEL[t].toUpperCase()}`, rows.filter(r => r.type === t).length, activeTypes, t)));
         hFill(document.getElementById('statusPills'),
-            statuses.map(s => pill(STATUS_LABEL[s], rows.filter(r => r.status === s).length, activeStatuses, s)));
+            statuses.map(s => filterItem(`${FLOQ_STATUS_SIGN[s]} ${STATUS_LABEL[s].toUpperCase()}`, rows.filter(r => r.status === s).length, activeStatuses, s)));
     }
 
     // Neuer Beleg: Typ-Auswahl-Modal → Draft anlegen → Workbench.

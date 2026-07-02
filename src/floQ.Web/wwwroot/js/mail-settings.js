@@ -11,7 +11,7 @@
         $('fUserName').value = s.userName;
         $('fSender').value = s.sender;
         $('fSenderDisplayName').value = s.senderDisplayName || '';
-        $('pwHint').textContent = s.hasPassword ? '(gespeichert — nur zum Ändern ausfüllen)' : '(noch keines gespeichert)';
+        $('pwHint').textContent = s.hasPassword ? '— gespeichert, nur zum Ändern ausfüllen' : '— noch keines gespeichert';
     }
 
     async function save() {

@@ -6,7 +6,7 @@
 
     if (!window.PublicKeyCredential) {
         status.textContent = 'Dein Browser unterstützt keine Passkeys.';
-        status.className = 'status error';
+        status.className = 'auth-status error';
         form.querySelector('button').disabled = true;
         return;
     }
@@ -14,7 +14,7 @@
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         status.textContent = '';
-        status.className = 'status';
+        status.className = 'auth-status';
 
         const email = form.email.value.trim();
 
@@ -33,7 +33,7 @@
             window.location.href = complete.data.redirect || '/';
         } catch (err) {
             status.textContent = 'Fehler: ' + (err.message || err);
-            status.className = 'status error';
+            status.className = 'auth-status error';
         }
     });
 })();

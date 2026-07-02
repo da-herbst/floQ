@@ -6,8 +6,6 @@
    Storno/Mahnung: zuerst Originalrechnung wählen, dann Folgebeleg erzeugen). */
 (() => {
     const TYPE_LABEL = { 1: 'Angebot', 2: 'Rechnung', 3: 'Gutschrift', 4: 'Stornorechnung', 5: 'Mahnung' };
-    const STATUS_LABEL = { 0: 'Entwurf', 1: 'Abgeschlossen', 2: 'Versendet', 3: 'Gesehen', 4: 'Storniert' };
-    const STATUS_TONE = { 0: 'warn', 1: 'ok', 2: 'info', 3: 'neutral', 4: 'danger' };
 
     const params = new URLSearchParams(window.location.search);
     let docId = Number(params.get('id')) || 0;
@@ -65,23 +63,26 @@
     function renderEntries() {
         const body = $('entriesBody');
         const rows = entries.map((row, i) => {
+            const descInput = entryInput(row, 'description', { placeholder: row.isDiscount ? 'Rabatt-Bezeichnung' : 'Leistung / Beschreibung' });
             const tr = h('tr', { class: row.isDiscount ? 'row-discount' : '' }, [
-                h('td', {}, entryInput(row, 'description', { placeholder: row.isDiscount ? 'Rabatt-Bezeichnung' : 'Leistung / Beschreibung' })),
+                row.isDiscount
+                    ? h('td', { class: 'pad-desc' }, [h('span', { class: 'bullet' }, '•'), descInput])
+                    : h('td', {}, descInput),
                 h('td', {}, entryInput(row, 'quantity', { type: 'number', step: '0.01', num: true })),
                 h('td', {}, entryInput(row, 'unit', { placeholder: 'Std.' })),
                 h('td', {}, entryInput(row, 'unitPrice', { type: 'number', step: '0.01', num: true })),
                 h('td', {}, entryInput(row, 'vatRate', { type: 'number', step: '0.5', min: '0', num: true })),
-                h('td', { class: 'num', 'data-net': '1', style: 'padding-top:13px' }, floqFmt.money(row.quantity * row.unitPrice)),
-                h('td', {}, h('div', { class: 'hstack', style: 'gap:2px' }, [
+                h('td', { class: 'net', 'data-net': '1' }, floqFmt.money(row.quantity * row.unitPrice)),
+                h('td', { class: 'act' }, [
                     !row.isDiscount ? h('button', {
-                        class: 'entry-del', type: 'button', title: 'Rabattzeile hinzufügen',
+                        class: 'entry-act', type: 'button', title: 'Rabattzeile hinzufügen',
                         onclick: () => {
                             entries.splice(i + 1, 0, { description: 'Rabatt', quantity: 1, unit: 'pauschal', unitPrice: 0, vatRate: row.vatRate, isDiscount: true });
                             renderEntries();
                         },
                     }, '%') : null,
                     h('button', {
-                        class: 'entry-del', type: 'button', title: 'Zeile entfernen',
+                        class: 'entry-act', type: 'button', title: 'Zeile entfernen',
                         onclick: () => {
                             // Hauptposition löschen entfernt auch ihre Rabattzeilen.
                             let end = i + 1;
@@ -90,7 +91,7 @@
                             renderEntries();
                         },
                     }, '×'),
-                ])),
+                ]),
             ]);
             return tr;
         });
@@ -130,7 +131,7 @@
         $('docNumber').textContent = detail.number || '';
         $('asideNumber').textContent = detail.number || '–';
         $('asideGross').textContent = floqFmt.money(detail.gross);
-        hFill($('asideStatus'), h('span', { class: `badge badge-${STATUS_TONE[detail.status]}` }, [h('span', { class: 'dot' }), STATUS_LABEL[detail.status]]));
+        hFill($('asideStatus'), floqStatusEl(detail.status));
 
         // Typ-abhängige Felder ein-/ausblenden (data-only="1,2").
         document.querySelectorAll('[data-only]').forEach(el => {
@@ -290,7 +291,10 @@
 
     $('btnFinalize').addEventListener('click', async () => {
         if (!await save(true)) return;
-        if (!confirm('Beleg abschließen? Die Belegnummer wird gezogen; danach ist der Beleg nicht mehr frei editierbar.')) return;
+        if (!await floqConfirm({
+            eyebrow: 'Abschließen', title: 'Beleg abschließen?', confirm: 'Abschließen',
+            text: 'Die Belegnummer wird gezogen; danach ist der Beleg gesperrt — das lässt sich nicht rückgängig machen.',
+        })) return;
         try {
             await floqApi.post(`/api/v1/documents/${docId}/finalize`);
             floqToast('Beleg abgeschlossen.');
@@ -299,7 +303,10 @@
     });
 
     $('btnUnlock').addEventListener('click', async () => {
-        if (!confirm('Beleg entsperren? Das persistierte PDF wird verworfen; der Beleg wird wieder zum Entwurf.')) return;
+        if (!await floqConfirm({
+            eyebrow: 'Entsperren', title: 'Beleg entsperren?', confirm: 'Entsperren',
+            text: 'Das persistierte PDF wird verworfen; der Beleg wird wieder zum Entwurf.',
+        })) return;
         try {
             await floqApi.post(`/api/v1/documents/${docId}/unlock`);
             window.location.reload();
@@ -307,7 +314,10 @@
     });
 
     $('btnDelete').addEventListener('click', async () => {
-        if (!confirm('Entwurf unwiderruflich verwerfen?')) return;
+        if (!await floqConfirm({
+            eyebrow: 'Entwurf verwerfen', title: 'Entwurf verwerfen?', confirm: 'Verwerfen',
+            text: 'Der Entwurf wird unwiderruflich gelöscht.',
+        })) return;
         try {
             await floqApi.del(`/api/v1/documents/${docId}`);
             window.location.href = '/Billing/Documents';
@@ -344,7 +354,7 @@
             $('sendModal').hidden = true;
             floqToast('Beleg versendet.');
             detail = await floqApi.get(`/api/v1/documents/${docId}`);
-            hFill($('asideStatus'), h('span', { class: `badge badge-${STATUS_TONE[detail.status]}` }, [h('span', { class: 'dot' }), STATUS_LABEL[detail.status]]));
+            hFill($('asideStatus'), floqStatusEl(detail.status));
             await loadDistributions();
         } catch (e) {
             floqToast(e.message, true);
@@ -362,12 +372,12 @@
             trail.push(d.attachPdf ? 'PDF-Anhang' : 'Link');
             if (d.openCount > 0) trail.push(`geöffnet ×${d.openCount}`);
             if (d.downloadCount > 0) trail.push(`geladen ×${d.downloadCount}`);
-            return h('div', { style: 'padding:4px 0' }, [
-                h('div', { class: 't-sm', style: 'font-weight:600' }, d.recipientEmail),
-                h('div', { class: 't-xs t-muted' }, trail.join(' · ')),
+            return h('div', { class: 'dist-item' }, [
+                h('div', { class: 'dist-mail' }, d.recipientEmail),
+                h('div', { class: 'dist-meta' }, trail.join(' · ')),
             ]);
         });
-        hFill($('distributionsList'), rows.length ? rows : h('div', { class: 't-xs t-muted' }, 'Noch nicht versendet.'));
+        hFill($('distributionsList'), rows.length ? rows : h('div', { class: 'aside-note' }, 'Noch nicht versendet.'));
     }
 
     // ── Zahlungen ───────────────────────────────────────────────────────
@@ -379,16 +389,16 @@
                 h('span', { class: 'meta-value num hstack', style: 'gap:6px;justify-content:flex-end' }, [
                     floqFmt.money(p.amount),
                     h('button', {
-                        class: 'entry-del', type: 'button', title: 'Zahlung löschen', style: 'padding:0 2px',
+                        class: 'entry-act', type: 'button', title: 'Zahlung löschen',
                         onclick: async () => {
-                            if (!confirm('Zahlung löschen?')) return;
+                            if (!await floqConfirm({ eyebrow: 'Zahlung', title: 'Zahlung löschen?', confirm: 'Löschen' })) return;
                             try { await floqApi.del(`/api/v1/payments/${p.id}`); await loadPayments(); }
                             catch (e) { floqToast(e.message, true); }
                         },
                     }, '×'),
                 ]),
             ]));
-        hFill($('paymentsList'), rows.length ? rows : h('div', { class: 't-xs t-muted' }, 'Noch keine Zahlungen.'));
+        hFill($('paymentsList'), rows.length ? rows : h('div', { class: 'aside-note' }, 'Noch keine Zahlungen.'));
     }
 
     $('btnAddPayment').addEventListener('click', () => {

@@ -10,7 +10,7 @@
 
     function setStatus(text, isError) {
         status.textContent = text;
-        status.className = 'status' + (isError ? ' error' : '');
+        status.className = 'auth-status' + (isError ? ' error' : '');
     }
 
     toggle.addEventListener('click', async (e) => {

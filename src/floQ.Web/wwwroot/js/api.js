@@ -64,7 +64,41 @@ function hFill(container, children) {
     container.replaceChildren(...[].concat(children).filter(Boolean));
 }
 
-/* Toast-Meldung (Erfolg/Fehler) — verschwindet nach 4s. */
+/* Beleg-Status als Zeichen, nicht als Farbe (Mono, Versal). Storniert
+   durchgestrichen. withLabel=false → nur das Glyph (kompakte Listen). */
+const FLOQ_STATUS_SIGN = { 0: '○', 1: '●', 2: '➔', 3: '◐', 4: '✕' };
+const FLOQ_STATUS_LABEL = { 0: 'Entwurf', 1: 'Abgeschlossen', 2: 'Versendet', 3: 'Gesehen', 4: 'Storniert' };
+function floqStatusEl(status, withLabel = true) {
+    const sign = FLOQ_STATUS_SIGN[status] ?? '○';
+    const cls = 'status-sign'
+        + (withLabel ? '' : ' glyph-only')
+        + (status === 4 ? ' is-storniert' : '');
+    const text = withLabel ? `${sign} ${(FLOQ_STATUS_LABEL[status] || '').toUpperCase()}` : sign;
+    return h('span', { class: cls }, text);
+}
+
+/* Bestätigungs-Modal (ersetzt natives confirm()). Promise<bool>. */
+function floqConfirm({ eyebrow = 'Bestätigen', title, text = '', confirm = 'Bestätigen' }) {
+    return new Promise(resolve => {
+        const done = (ok) => { scrim.remove(); resolve(ok); };
+        const scrim = h('div', { class: 'modal-scrim', onclick: e => { if (e.target === scrim) done(false); } }, [
+            h('div', { class: 'modal narrow' }, [
+                h('div', { class: 'modal-header' }, [
+                    h('div', { class: 'modal-eyebrow' }, eyebrow),
+                    h('div', { class: 'modal-title sm' }, title),
+                    text ? h('div', { class: 'modal-text' }, text) : null,
+                ]),
+                h('div', { class: 'modal-footer' }, [
+                    h('button', { class: 'btn-text', type: 'button', onclick: () => done(false) }, 'Abbrechen'),
+                    h('button', { class: 'btn btn-primary', type: 'button', onclick: () => done(true) }, confirm),
+                ]),
+            ]),
+        ]);
+        document.body.appendChild(scrim);
+    });
+}
+
+/* Toast-Meldung — verschwindet nach 4s. Fehler: gleicher Look + „! " (kein Rot). */
 function floqToast(message, isError = false) {
     let host = document.getElementById('floqToastHost');
     if (!host) {
@@ -74,8 +108,8 @@ function floqToast(message, isError = false) {
         document.body.appendChild(host);
     }
     const el = document.createElement('div');
-    el.className = 'toast' + (isError ? ' toast-error' : '');
-    el.textContent = message;
+    el.className = 'toast';
+    el.textContent = (isError ? '! ' : '') + message;
     host.appendChild(el);
     setTimeout(() => el.remove(), 4000);
 }
