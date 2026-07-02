@@ -2,6 +2,7 @@ using Fido2NetLib;
 using floQ.Web.AdminCenter;
 using floQ.Web.Auth;
 using floQ.Web.Data;
+using floQ.Web.Services.Documents;
 using floQ.Web.Tenancy;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
@@ -72,6 +73,9 @@ builder.Services.AddFido2(options =>
 });
 
 builder.Services.AddScoped<IPasskeyService, PasskeyService>();
+
+// Beleg-Engine (Port des batOS-DocumentEngine-Letztstands).
+builder.Services.AddScoped<IDocumentEngine, DocumentEngine>();
 
 // AdminCenter-Anbindung (zentrale Abo-Verwaltung, https://admin.batos.at).
 // Ohne Konfiguration (PlatformKey/ShortName leer) bleibt der Sync untätig.
