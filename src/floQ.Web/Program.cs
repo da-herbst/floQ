@@ -1,4 +1,5 @@
 using Fido2NetLib;
+using floQ.Web.AdminCenter;
 using floQ.Web.Auth;
 using floQ.Web.Data;
 using floQ.Web.Tenancy;
@@ -72,6 +73,15 @@ builder.Services.AddFido2(options =>
 
 builder.Services.AddScoped<IPasskeyService, PasskeyService>();
 
+// AdminCenter-Anbindung (zentrale Abo-Verwaltung, https://admin.batos.at).
+// Ohne Konfiguration (PlatformKey/ShortName leer) bleibt der Sync untätig.
+builder.Services.Configure<AdminCenterOptions>(
+    builder.Configuration.GetSection(AdminCenterOptions.SectionName));
+builder.Services.AddHttpClient(AdminCenterSyncService.HttpClientName);
+builder.Services.AddSingleton<IAdminCenterSyncTrigger, AdminCenterSyncTrigger>();
+builder.Services.AddSingleton<PlatformStateService>();
+builder.Services.AddHostedService<AdminCenterSyncService>();
+
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
@@ -85,6 +95,9 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
+// Shutoff-Cache aus der DB laden (Zustand überlebt Neustarts).
+app.Services.GetRequiredService<PlatformStateService>().Reload();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -92,6 +105,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Shutoff-Gate: vor Routing/Auth, damit stillgelegte Instanzen sofort 503 liefern.
+app.UseAdminCenterShutoff();
+
 app.UseRouting();
 
 app.UseSession();
@@ -102,5 +119,7 @@ app.UseAuthorization();
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
+
+app.MapAdminCenterEndpoints();
 
 app.Run();

@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using floQ.Domain.Identity;
+using floQ.Domain.Platform;
 using floQ.Domain.Settings;
 using floQ.Domain.Tenants;
 using floQ.Web.Tenancy;
@@ -36,6 +37,9 @@ public class AppDbContext(
 
     // Tenant-Schicht (auto-isoliert)
     public DbSet<CompanyProfile> CompanyProfiles => Set<CompanyProfile>();
+
+    // Deployment-Schicht (Singleton-State, AC-Cache)
+    public DbSet<PlatformState> PlatformStates => Set<PlatformState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -83,6 +87,14 @@ public class AppDbContext(
             b.Property(c => c.VatId).HasMaxLength(32);
             b.Property(c => c.Iban).HasMaxLength(34);
             b.Property(c => c.Bic).HasMaxLength(11);
+        });
+
+        // ---- Deployment-Schicht ----
+        modelBuilder.Entity<PlatformState>(b =>
+        {
+            b.HasKey(s => s.Id);
+            // Singleton-Row: Id wird explizit gesetzt (SingletonId=1), nie generiert.
+            b.Property(s => s.Id).ValueGeneratedNever();
         });
 
         // ---- Auto-Configuration für jede TenantScopedEntity ----

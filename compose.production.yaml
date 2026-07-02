@@ -11,6 +11,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=floq;Username=floq;Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD nicht gesetzt — siehe .env}
+      - AdminCenter__PlatformKey=${AdminCenter__PlatformKey:-}
     depends_on:
       postgres:
         condition: service_healthy
