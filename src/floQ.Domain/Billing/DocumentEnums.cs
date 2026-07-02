@@ -36,7 +36,11 @@ public enum ReverseChargeMode
     EuReverseCharge = 1,
 
     /// <summary>Drittland — nicht steuerbar in Österreich.</summary>
-    ThirdCountry = 2
+    ThirdCountry = 2,
+
+    /// <summary>Kleinunternehmerregelung (§6 Abs. 1 Z 27 UStG) — unecht befreit.
+    /// Default für neue Entwürfe, wenn <c>CompanyProfile.IsSmallBusiness</c> gesetzt ist.</summary>
+    SmallBusiness = 3
 }
 
 /// <summary>Zahlungsweg einer manuell erfassten Zahlung.</summary>

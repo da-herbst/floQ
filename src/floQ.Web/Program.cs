@@ -3,8 +3,11 @@ using floQ.Web.AdminCenter;
 using floQ.Web.Auth;
 using floQ.Web.Data;
 using floQ.Web.Services.Documents;
+using floQ.Web.Services.Pdf;
+using floQ.Web.Services.Storage;
 using floQ.Web.Tenancy;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -49,7 +52,12 @@ builder.Services
         options.SlidingExpiration = true;
     });
 
-builder.Services.AddAuthorization();
+// Policy "InternalRender": lässt die Playwright-Self-Calls der PDF-Pipeline
+// durch (Loopback + renderKey, siehe InternalRenderMiddleware).
+builder.Services.AddAuthorization(o =>
+    o.AddPolicy(InternalRenderRequirement.PolicyName,
+        p => p.AddRequirements(new InternalRenderRequirement())));
+builder.Services.AddSingleton<IAuthorizationHandler, InternalRenderAuthorizationHandler>();
 
 // Session für WebAuthn-Challenge zwischen Begin/Complete.
 builder.Services.AddDistributedMemoryCache();
@@ -76,6 +84,11 @@ builder.Services.AddScoped<IPasskeyService, PasskeyService>();
 
 // Beleg-Engine (Port des batOS-DocumentEngine-Letztstands).
 builder.Services.AddScoped<IDocumentEngine, DocumentEngine>();
+
+// PDF-Pipeline: Playwright-Renderer (Singleton, Browser wird wiederverwendet)
+// + tenant-getrenntes Upload-Root für persistierte Beleg-PDFs/Briefpapier.
+builder.Services.AddSingleton<HtmlToPdfService>();
+builder.Services.AddSingleton<UploadStorage>();
 
 // AdminCenter-Anbindung (zentrale Abo-Verwaltung, https://admin.batos.at).
 // Ohne Konfiguration (PlatformKey/ShortName leer) bleibt der Sync untätig.
@@ -117,6 +130,11 @@ app.UseRouting();
 
 app.UseSession();
 app.UseAuthentication();
+
+// Internes PDF-Rendering: Playwright-Loopback-Requests mit renderKey
+// authentifizieren (setzt auch den "tid"-Claim für den TenantResolver).
+app.UseInternalRenderAuth();
+
 app.UseTenantResolver();   // muss NACH UseAuthentication, VOR allem mit DbContext-Zugriff
 
 // Shutoff-Gate je Tenant: stillgelegte Mandanten sehen nur die Wartungsseite.

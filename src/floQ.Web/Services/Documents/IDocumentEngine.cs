@@ -182,6 +182,8 @@ public sealed record PaymentRow(
     int Id, DateTime PaidDateVienna, decimal Amount, PaymentMethod Method,
     string MethodLabel, string? Reference, string? Note);
 
+public sealed record PdfResult(byte[] Bytes, string FileName);
+
 // ══════════════════════════════════════════════════════════════════
 // Vertrag
 // ══════════════════════════════════════════════════════════════════
@@ -246,6 +248,12 @@ public interface IDocumentEngine
     Task<DocumentResult> FinalizeAsync(int id, Guid userId, CancellationToken ct = default);
     /// <summary>Entsperren: Created → Draft (persistiertes PDF wird verworfen).</summary>
     Task<DocumentResult> UnlockAsync(int id, CancellationToken ct = default);
+
+    // ── PDF ──────────────────────────────────────────────────────────
+    /// <summary>Beleg-PDF rendern (Briefpapier-Overlay aus dem CompanyProfile).
+    /// <paramref name="requireFinalized"/> blockiert Entwürfe (Download-Pfad);
+    /// false = Live-Vorschau.</summary>
+    Task<PdfResult?> RenderPdfAsync(int id, bool requireFinalized, CancellationToken ct = default);
 
     // ── Zahlungen ────────────────────────────────────────────────────
     /// <summary>Manuelle Zahlung auf eine Rechnung erfassen.</summary>

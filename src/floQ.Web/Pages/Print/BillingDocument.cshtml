@@ -1,0 +1,385 @@
+@page "{id:int}"
+@using floQ.Domain.Billing
+@using floQ.Web.Services.Time
+@model floQ.Web.Pages.Print.BillingDocumentModel
+@{
+    Layout = "_LayoutPrint";
+    ViewData["Title"] = $"{Model.DocumentTypeName} — Druck";
+    var own = Model.OwnCompany;
+}
+
+@section Styles {
+    <link rel="stylesheet" asp-append-version="true" href="~/css/print-billing.css" />
+}
+
+@functions {
+    static string Inv(double? v) => (v ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture);
+    static string FormatIban(string? iban) => string.IsNullOrWhiteSpace(iban) ? "" :
+        string.Join(" ", System.Text.RegularExpressions.Regex.Matches(iban.Replace(" ", ""), ".{1,4}").Select(m => m.Value));
+
+    string ItemStyle(BillingLayoutItem? item)
+    {
+        if (item == null) return "";
+        var s = $"top: {Inv(item.Top)}mm;";
+        if (item.Left.HasValue) s += $" left: {Inv(item.Left)}mm;";
+        if (item.Right.HasValue) s += $" right: {Inv(item.Right)}mm;";
+        if (item.Width.HasValue) s += $" width: {Inv(item.Width)}mm;";
+        if (item.FontSize.HasValue) s += $" font-size: {Inv(item.FontSize)}pt;";
+        return s;
+    }
+
+    // Fließ-Container (Tabelle + Summen + Texte): Layout-Item-Koordinaten werden zu
+    // Paddings, damit der Inhalt normal fließt und Chromium sauber paginieren kann.
+    string FlowStyle(BillingLayoutItem? item) =>
+        $"padding-top: {Inv(item?.Top ?? 125)}mm;" +
+        $" padding-left: {Inv(item?.Left ?? 20)}mm;" +
+        $" padding-right: {Inv(item?.Right ?? 15)}mm;" +
+        $" font-size: {Inv(item?.FontSize ?? 10)}pt;";
+}
+
+@* Kein Briefpapier im HTML — PdfSharp fügt das Vektor-PDF als Hintergrund ein *@
+
+@* Pagination: Seite 1 ohne Top-Margin (Kopf liegt mm-genau vom Blattrand),
+   Folgeseiten 35mm Luft (unter dem Briefpapier-Kopfband). margin-bottom 22mm =
+   Footer-Zone — MUSS hier im Body stehen: _LayoutPrint setzt sein @@page margin:0
+   NACH der Styles-Section, nur so gewinnt diese Regel. Wert deckungsgleich mit
+   data-margin-bottom des Footer-Templates. *@
+<style>
+    @@page {
+        size: A4 portrait;
+        margin: 35mm 0 22mm 0;
+    }
+    @@page :first {
+        margin-top: 0;
+    }
+</style>
+
+<div class="doc-page">
+
+    @* ── Empfänger ── *@
+    @{ var rName = Model.GetItem("RecipientName"); }
+    @if (rName != null)
+    {
+        <div class="doc-block" style="@ItemStyle(rName)">
+            @if (Model.RecipientName != null)
+            {
+                <div style="font-weight: 700;">@Model.RecipientName</div>
+                @if (Model.IsVisible("RecipientAddress")) { <div>@Model.RecipientAddress</div> }
+                @if (Model.IsVisible("RecipientZipCity")) { <div>@Model.RecipientZipCity</div> }
+                @if (Model.IsVisible("RecipientCountry")) { <div>@Model.RecipientCountry</div> }
+                @if (!string.IsNullOrWhiteSpace(Model.RecipientUid)) { <div>@Model.RecipientUid</div> }
+            }
+            else
+            {
+                <div style="color: #86868b; font-style: italic;">Kein Empfänger</div>
+            }
+        </div>
+    }
+
+    @* ── Beleg-Merkmale ── *@
+    @{ var docNum = Model.GetItem("DocNumber"); }
+    @if (docNum != null)
+    {
+        <div class="doc-block" style="@ItemStyle(docNum)">
+            <table>
+                <tr>
+                    <td class="meta-label">Nummer</td>
+                    <td class="meta-value">@(string.IsNullOrWhiteSpace(Model.Document.Number) ? "Entwurf" : Model.Document.Number)</td>
+                </tr>
+                @if (Model.IsVisible("DocDate"))
+                {
+                    <tr>
+                        <td class="meta-label">Datum</td>
+                        <td class="meta-value">@ViennaTime.ToVienna(Model.Document.Date).ToString("dd.MM.yyyy")</td>
+                    </tr>
+                }
+                @if (Model.IsVisible("ServicePeriod") && Model.ServicePeriodDisplay != null)
+                {
+                    <tr>
+                        <td class="meta-label">Leistungszeitraum</td>
+                        <td class="meta-value">@Model.ServicePeriodDisplay</td>
+                    </tr>
+                }
+                @if (Model.IsVisible("ValidUntil") && Model.Document is Quote q && q.ValidUntil.HasValue)
+                {
+                    <tr>
+                        <td class="meta-label">Gültig bis</td>
+                        <td class="meta-value">@ViennaTime.ToVienna(q.ValidUntil.Value).ToString("dd.MM.yyyy")</td>
+                    </tr>
+                }
+                @if (Model.IsVisible("ExternalReference") && !string.IsNullOrWhiteSpace(Model.ExternalReference))
+                {
+                    <tr>
+                        <td class="meta-label">Referenz</td>
+                        <td class="meta-value">@Model.ExternalReference</td>
+                    </tr>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.RecipientUid))
+                {
+                    <tr>
+                        <td class="meta-label">UID Empfänger</td>
+                        <td class="meta-value">@Model.RecipientUid</td>
+                    </tr>
+                }
+            </table>
+        </div>
+    }
+
+    @* ── Titel ── *@
+    @{ var title = Model.GetItem("Title"); }
+    @if (title != null)
+    {
+        <div class="doc-block" style="@ItemStyle(title) font-weight: 700;">
+            @Model.DocumentTypeName
+        </div>
+    }
+
+    @* ── Vortext ── *@
+    @{ var intro = Model.GetItem("IntroText"); }
+    @if (intro != null && !string.IsNullOrWhiteSpace(Model.IntroText))
+    {
+        <div class="doc-block" style="@ItemStyle(intro)">
+            @Html.Raw(Html.Encode(Model.IntroText).Replace("&#xA;", "<br />"))
+        </div>
+    }
+
+    @* ── Rechnungstabelle (nur Mahnung) ── *@
+    @if (Model.Document is PaymentReminder && Model.ReminderInvoices.Any())
+    {
+        var prTable = Model.GetItem("Table");
+        <div class="doc-flow" style="@FlowStyle(prTable)">
+            <table class="doc-items-table">
+                <thead>
+                    <tr>
+                        <th class="col-desc">Rechnungsnummer</th>
+                        <th class="col-qty">Rechnungsdatum</th>
+                        <th class="col-total">Offener Betrag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var inv in Model.ReminderInvoices)
+                    {
+                        <tr>
+                            <td>@inv.Number</td>
+                            <td class="col-qty">@inv.DateVienna.ToString("dd.MM.yyyy")</td>
+                            <td class="col-total">@inv.OutstandingAmount.ToString("N2") €</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="doc-totals">
+                <div class="doc-totals-row">
+                    <span>Zwischensumme offene Rechnungen</span>
+                    <span>@Model.ReminderInvoices.Sum(i => i.OutstandingAmount).ToString("N2") €</span>
+                </div>
+                @if (Model.ReminderFee > 0)
+                {
+                    <div class="doc-totals-row">
+                        <span>Mahngebühr</span>
+                        <span>@Model.ReminderFee.ToString("N2") €</span>
+                    </div>
+                }
+                @if (Model.InterestAmount is > 0)
+                {
+                    <div class="doc-totals-row">
+                        <span>Verzugszinsen @(Model.InterestRate.HasValue ? $"({Model.InterestRate.Value:N1}%)" : "")</span>
+                        <span>@Model.InterestAmount.Value.ToString("N2") €</span>
+                    </div>
+                }
+                <div class="doc-totals-row doc-totals-gross">
+                    <span>Gesamtbetrag</span>
+                    <span>@Model.Document.Gross.ToString("N2") €</span>
+                </div>
+                @if (Model.ReminderDueDateVienna.HasValue)
+                {
+                    <div class="doc-totals-row" style="margin-top: 3mm;">
+                        <span style="font-weight: 700;">Zahlungsziel</span>
+                        <span style="font-weight: 700;">@Model.ReminderDueDateVienna.Value.ToString("dd.MM.yyyy")</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @* ── Positionstabelle (Fließ-Layout: paginiert sauber über Seiten) ── *@
+    @{ var table = Model.GetItem("Table"); }
+    @if (table != null && Model.Entries.Any())
+    {
+        <div class="doc-flow" style="@FlowStyle(table)">
+            <table class="doc-items-table">
+                <thead>
+                    <tr>
+                        @if (Model.IsVisible("TableColPos")) { <th class="col-pos">Pos.</th> }
+                        @if (Model.IsVisible("TableColDesc")) { <th class="col-desc">Bezeichnung</th> }
+                        @if (Model.IsVisible("TableColPrice")) { <th class="col-price">Einzelpreis</th> }
+                        @if (Model.IsVisible("TableColQty")) { <th class="col-qty">Menge</th> }
+                        @if (Model.IsVisible("TableColTotal")) { <th class="col-total">Netto</th> }
+                    </tr>
+                </thead>
+                @* Eine tbody-Gruppe pro Hauptposition inkl. ihrer Rabattzeilen —
+                   break-inside:avoid hält die Gruppe beim Seitenumbruch zusammen. *@
+                @{ var pos = 1; var idx = 0; }
+                @while (idx < Model.Entries.Count)
+                {
+                    var main = Model.Entries[idx];
+                    idx++;
+                    var discs = Model.Entries.Skip(idx).TakeWhile(e => e.IsDiscount).ToList();
+                    idx += discs.Count;
+                    <tbody class="entry-group">
+                        <tr>
+                            @if (Model.IsVisible("TableColPos")) { <td class="col-pos">@($"{pos++}.")</td> }
+                            @if (Model.IsVisible("TableColDesc")) { <td class="col-desc">@main.Description</td> }
+                            @if (Model.IsVisible("TableColPrice")) { <td class="col-price">@main.UnitPrice.ToString("N2") €</td> }
+                            @if (Model.IsVisible("TableColQty")) { <td class="col-qty">@main.Quantity.ToString("N2") @main.Unit</td> }
+                            @if (Model.IsVisible("TableColTotal")) { <td class="col-total">@main.Net.ToString("N2") €</td> }
+                        </tr>
+                        @foreach (var disc in discs)
+                        {
+                            <tr class="discount-row">
+                                @if (Model.IsVisible("TableColPos")) { <td class="col-pos"></td> }
+                                @if (Model.IsVisible("TableColDesc")) {
+                                    <td class="col-desc discount-desc">
+                                        <span class="discount-prefix">•</span>
+                                        @disc.Description @disc.DiscountValueLabel
+                                    </td>
+                                }
+                                @if (Model.IsVisible("TableColPrice")) { <td class="col-price">@disc.UnitPrice.ToString("N2") €</td> }
+                                @if (Model.IsVisible("TableColQty")) { <td class="col-qty">@disc.Quantity.ToString("N2") @disc.Unit</td> }
+                                @if (Model.IsVisible("TableColTotal")) { <td class="col-total">@disc.Net.ToString("N2") €</td> }
+                            </tr>
+                        }
+                    </tbody>
+                }
+            </table>
+
+            @* ── Summen: Netto → USt je Satz → Brutto ── *@
+            <div class="doc-totals">
+                @if (Model.IsVisible("TotalNet"))
+                {
+                    <div class="doc-totals-row" style="font-weight:600;">
+                        <span>Gesamtbetrag netto</span>
+                        <span>@Model.TotalNet.ToString("N2") €</span>
+                    </div>
+                }
+                @* USt immer ausweisen, auch bei Steuerbefreiung (RC/Drittland/
+                   Kleinunternehmer: 0 %, unabhängig von den gespeicherten
+                   Positions-Steuersätzen). *@
+                @if (Model.IsVisible("TotalVat"))
+                {
+                    var isExempt = Model.Document.ReverseChargeMode != ReverseChargeMode.None;
+                    var positiveGroups = Model.Entries.GroupBy(e => e.VatRate).Where(g => g.Key > 0).OrderByDescending(g => g.Key).ToList();
+                    if (!isExempt && positiveGroups.Any())
+                    {
+                        foreach (var group in positiveGroups)
+                        {
+                            var vatAmount = group.Sum(e => e.Net * group.Key / 100);
+                            <div class="doc-totals-row">
+                                <span>zzgl. Umsatzsteuer @group.Key.ToString("N0") %</span>
+                                <span>@vatAmount.ToString("N2") €</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="doc-totals-row">
+                            <span>zzgl. Umsatzsteuer 0 %</span>
+                            <span>0,00 €</span>
+                        </div>
+                    }
+                }
+                @if (Model.IsVisible("TotalGross"))
+                {
+                    <div class="doc-totals-row doc-totals-gross">
+                        <span>Gesamtbetrag brutto</span>
+                        <span>@Model.TotalGross.ToString("N2") €</span>
+                    </div>
+                }
+            </div>
+
+            @* Steuerbefreiung: Pflichthinweis (USt entfällt). Kaskade Beleg →
+               CompanyProfile (Kleinunternehmer) → Builtin-Default. *@
+            @if (Model.Document.ReverseChargeMode != ReverseChargeMode.None)
+            {
+                <div class="doc-reverse-charge" style="margin-top:4mm;font-weight:600;">@Model.ReverseChargeNote</div>
+            }
+
+            @* ── Abschluss-Sektion: Texte als EINE Umbruch-Einheit ── *@
+            <div class="doc-closing">
+
+            @if (Model.Document is Quote && !string.IsNullOrWhiteSpace(Model.ConditionNotes))
+            {
+                <div style="margin-top: 4mm; font-size: @(Inv(table.FontSize ?? 10))pt;">
+                    @Html.Raw(Html.Encode(Model.ConditionNotes).Replace("&#xA;", "<br />"))
+                </div>
+            }
+
+            @if (Model.IsVisible("Note") && !string.IsNullOrWhiteSpace(Model.Document.Note))
+            {
+                <div style="margin-top: 4mm; font-size: @(Inv(table.FontSize ?? 10))pt;">
+                    @Model.Document.Note
+                </div>
+            }
+
+            @if (Model.IsVisible("PaymentTerms") && Model.Document.PaymentTermDays.HasValue)
+            {
+                <div style="margin-top: 4mm; font-size: @(Inv(table.FontSize ?? 10))pt;">
+                    @if (Model.Document.DiscountRate.HasValue && Model.Document.PaymentTermDiscountDays.HasValue)
+                    {
+                        <text>Zahlungsbedingungen: @Model.Document.DiscountRate.Value.ToString("N2")% Skonto bei Zahlung innerhalb von @Model.Document.PaymentTermDiscountDays Tagen, ansonsten innerhalb von @Model.Document.PaymentTermDays Tagen ab Rechnungseingang ohne Abzüge.</text>
+                    }
+                    else
+                    {
+                        <text>Zahlungsbedingungen: Zahlung innerhalb von @Model.Document.PaymentTermDays Tagen ab Rechnungseingang ohne Abzüge.</text>
+                    }
+                </div>
+            }
+
+            @if (Model.IsVisible("ClosingText") && !string.IsNullOrWhiteSpace(Model.ClosingText))
+            {
+                <div style="margin-top: 4mm; font-size: @(Inv(table.FontSize ?? 10))pt;">
+                    @Html.Raw(Html.Encode(Model.ClosingText).Replace("&#xA;", "<br />"))
+                </div>
+            }
+
+            </div> @* /doc-closing *@
+        </div>
+    }
+
+    @* ── Footer: als Chromium-FooterTemplate auf JEDER Seite (Konvention
+         HtmlToPdfService). Self-contained: nur Inline-Styles, keine Webfonts.
+         White-Label: ausschließlich CompanyProfile des floQ-Kunden. ── *@
+    @{ var footer = Model.GetItem("FooterCompany"); }
+    @if (own != null && footer != null)
+    {
+        // Footer-Ränder an die Inhaltsränder (Item "Table") koppeln, damit Footer-
+        // Kante und Tabellenkante fluchten.
+        var footerAlign = Model.GetItem("Table");
+        var footerLeft = footerAlign?.Left ?? 20;
+        var footerRight = footerAlign?.Right ?? 15;
+        var fHasUid = Model.IsVisible("FooterUid") && !string.IsNullOrWhiteSpace(own.VatId);
+        var fHasBank = Model.IsVisible("FooterBank") && !string.IsNullOrWhiteSpace(own.Iban);
+        var fOrt = $"{own.ZipCode} {own.City}".Trim();
+        <template id="pdf-footer-template" data-margin-bottom="22mm">
+            <div style="width: 100%; padding: 0 @(Inv(footerRight))mm 6mm @(Inv(footerLeft))mm; box-sizing: border-box;
+                        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                        font-size: @(Inv(footer?.FontSize ?? 7.5))pt; color: #86868b; line-height: 1.25;">
+                <div style="border-top: 1px solid #d2d2d7; padding-top: 4px;
+                            display: flex; gap: 12px; align-items: flex-start;">
+                    <div style="flex: 1; text-align: left;">
+                        <div>@own.LegalName</div>
+                        @if (fHasUid) { <div>UID @own.VatId</div> }
+                    </div>
+                    <div style="flex: 1; text-align: center;">
+                        <div>@own.Street</div>
+                        <div>@fOrt</div>
+                    </div>
+                    <div style="flex: 1; text-align: right;">
+                        @if (Model.IsVisible("FooterContact") && !string.IsNullOrWhiteSpace(own.Email)) { <div>@own.Email</div> }
+                        @if (fHasBank) { <div>IBAN @FormatIban(own.Iban)</div> }
+                    </div>
+                </div>
+            </div>
+        </template>
+    }
+</div>

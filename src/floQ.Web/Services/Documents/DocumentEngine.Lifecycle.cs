@@ -1,14 +1,14 @@
 using floQ.Domain.Billing;
+using floQ.Web.Services.Pdf;
 using floQ.Web.Services.Time;
 using Microsoft.EntityFrameworkCore;
 
 namespace floQ.Web.Services.Documents;
 
 /// <summary>
-/// Lebenszyklus: Finalize, Unlock, Zahlungen.
-/// PDF-Persistierung beim Abschluss (und Löschung beim Unlock) folgt mit der
-/// PDF-Pipeline — die Kaskaden-Reihenfolge (Nummer → Created → Storno-Kaskade →
-/// PDF) ist hier bereits angelegt.
+/// Lebenszyklus: Finalize, Unlock, PDF-Rendering/-Persistierung, Zahlungen.
+/// Kaskaden-Reihenfolge beim Abschluss: Nummer ziehen → Created →
+/// Storno-Kaskade → PDF persistieren (batOS-Muster).
 /// </summary>
 public sealed partial class DocumentEngine
 {
@@ -50,8 +50,19 @@ public sealed partial class DocumentEngine
 
         await _db.SaveChangesAsync(ct);
 
-        // Ausbauschritt PDF-Pipeline: hier persistiertes Beleg-PDF erzeugen und
-        // doc.PdfPath setzen (Kaskade: Nummer → Created → PDF).
+        // Persistiertes Beleg-PDF erzeugen. Ein Render-Fehler kippt den Abschluss
+        // NICHT mehr zurück — die Nummer ist gezogen und bleibt lückenlos; das PDF
+        // lässt sich über die Vorschau/erneutes Abschließen jederzeit nachziehen.
+        try
+        {
+            await PersistFinalizedPdfAsync(doc, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Beleg {Id}: PDF-Persistierung beim Abschluss fehlgeschlagen", id);
+            return DocumentResult.Fail(
+                $"Beleg wurde als {doc.Number} abgeschlossen, aber die PDF-Erzeugung ist fehlgeschlagen: {ex.Message}");
+        }
 
         _logger.LogInformation("Beleg {Id} abgeschlossen als {Number} (User {UserId})", id, doc.Number, userId);
         return DocumentResult.Ok(id);
@@ -114,13 +125,86 @@ public sealed partial class DocumentEngine
         if (doc.Status == DocumentStatus.Draft)
             return DocumentResult.Fail("Beleg ist bereits ein Entwurf.");
 
-        // Ausbauschritt PDF-Pipeline: persistierte PDF-Datei physisch löschen.
-        // Bis dahin genügt das Lösen der Verknüpfung (es existieren keine Dateien).
+        // Persistiertes Beleg-PDF entfernen (wird beim erneuten Abschluss neu erzeugt).
+        if (!string.IsNullOrEmpty(doc.PdfPath))
+        {
+            try
+            {
+                _storage.Delete(_tenantContext.TenantId, doc.PdfPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Beleg-PDF {Path} konnte beim Entsperren nicht gelöscht werden", doc.PdfPath);
+            }
+        }
         doc.PdfPath = null;
         doc.Status = DocumentStatus.Draft;
 
         await _db.SaveChangesAsync(ct);
         return DocumentResult.Ok(id);
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // PDF
+    // ══════════════════════════════════════════════════════════════════
+
+    public async Task<PdfResult?> RenderPdfAsync(int id, bool requireFinalized, CancellationToken ct = default)
+    {
+        var doc = await _db.Documents.AsNoTracking().FirstOrDefaultAsync(d => d.Id == id, ct);
+        if (doc is null) return null;
+
+        if (requireFinalized && doc.Status == DocumentStatus.Draft)
+            return null;
+
+        var pdfBytes = await RenderAsync(doc, ct);
+        return new PdfResult(pdfBytes, GetPdfFileName(doc));
+    }
+
+    /// <summary>Rendert das Beleg-PDF über den Playwright-Self-Call
+    /// (tenant-aware: TenantId wandert als Query-Parameter mit, siehe
+    /// InternalRenderMiddleware) inkl. Briefpapier-Overlay aus dem CompanyProfile.</summary>
+    private async Task<byte[]> RenderAsync(Document doc, CancellationToken ct)
+    {
+        var tenantId = _tenantContext.TenantId;
+
+        // Briefpapier: tenant-relativer Pfad aus dem CompanyProfile.
+        string? letterheadFullPath = null;
+        var letterheadRelPath = await _db.CompanyProfiles
+            .Select(p => p.LetterheadPdfPath)
+            .FirstOrDefaultAsync(ct);
+        if (!string.IsNullOrWhiteSpace(letterheadRelPath) && _storage.Exists(tenantId, letterheadRelPath))
+            letterheadFullPath = _storage.Resolve(tenantId, letterheadRelPath);
+
+        return await _htmlToPdf.RenderPdfAsync(
+            $"/Print/BillingDocument/{doc.Id}?tenant={tenantId}",
+            PdfRenderOptions.Portrait(letterheadFullPath));
+    }
+
+    /// <summary>Rendert das Beleg-PDF und legt es unter
+    /// billing/{yyyy-MM}/ im Tenant-Upload-Root ab (Pfad → <see cref="Document.PdfPath"/>).</summary>
+    private async Task PersistFinalizedPdfAsync(Document doc, CancellationToken ct)
+    {
+        var pdfBytes = await RenderAsync(doc, ct);
+
+        var relativePath = Path.Combine("billing", ViennaTime.Now.ToString("yyyy-MM"), GetPdfFileName(doc));
+        await _storage.SaveAsync(_tenantContext.TenantId, relativePath, pdfBytes, ct);
+
+        doc.PdfPath = relativePath;
+        await _db.SaveChangesAsync(ct);
+    }
+
+    private static string GetPdfFileName(Document doc)
+    {
+        var prefix = GetDocumentType(doc) switch
+        {
+            DocumentType.Quote => "AN",
+            DocumentType.Invoice => "RE",
+            DocumentType.CreditNote => "GS",
+            DocumentType.CancellationInvoice => "SR",
+            _ => "MA"
+        };
+        var name = string.IsNullOrWhiteSpace(doc.Number) ? $"Entwurf-{doc.Id}" : doc.Number;
+        return $"{prefix}_{name}.pdf";
     }
 
     // ══════════════════════════════════════════════════════════════════

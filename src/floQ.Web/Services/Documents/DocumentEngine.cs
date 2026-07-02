@@ -1,5 +1,7 @@
 using floQ.Domain.Billing;
 using floQ.Web.Data;
+using floQ.Web.Services.Pdf;
+using floQ.Web.Services.Storage;
 using floQ.Web.Services.Time;
 using floQ.Web.Tenancy;
 using Microsoft.EntityFrameworkCore;
@@ -20,10 +22,14 @@ namespace floQ.Web.Services.Documents;
 public sealed partial class DocumentEngine(
     AppDbContext db,
     ITenantContext tenantContext,
+    HtmlToPdfService htmlToPdf,
+    UploadStorage storage,
     ILogger<DocumentEngine> logger) : IDocumentEngine
 {
     private readonly AppDbContext _db = db;
     private readonly ITenantContext _tenantContext = tenantContext;
+    private readonly HtmlToPdfService _htmlToPdf = htmlToPdf;
+    private readonly UploadStorage _storage = storage;
     private readonly ILogger<DocumentEngine> _logger = logger;
 
     public IQueryable<Document> DocumentsQuery => _db.Documents.AsNoTracking();
@@ -164,6 +170,15 @@ public sealed partial class DocumentEngine(
         document.Date = todayUtc;
         document.Status = DocumentStatus.Draft;
         document.CreatedByUserId = userId;
+
+        // Kleinunternehmer-Tenant (§6 Abs. 1 Z 27 UStG): neue Entwürfe starten
+        // steuerbefreit. Per-Beleg-Snapshot — ein späteres Umschalten des
+        // Firmen-Flags verändert bestehende Belege nie (Autark-Prinzip).
+        var isSmallBusiness = await _db.CompanyProfiles
+            .Select(p => p.IsSmallBusiness)
+            .FirstOrDefaultAsync(ct);
+        if (isSmallBusiness)
+            document.ReverseChargeMode = ReverseChargeMode.SmallBusiness;
 
         _db.Documents.Add(document);
         await _db.SaveChangesAsync(ct);

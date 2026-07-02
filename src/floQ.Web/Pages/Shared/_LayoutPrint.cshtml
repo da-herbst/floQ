@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    @await RenderSectionAsync("Styles", required: false)
+    <style>
+      /* A4 Portrait: 210mm x 297mm */
+      @@page {
+        size: A4 portrait;
+        margin: 0;
+      }
+      /* Systemschrift statt Webfont: kein externer Request im Print-Container,
+         und der Beleg trägt ausschließlich den Brand des floQ-Kunden. */
+      html {
+        font-family: 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+        font-size: 11px;
+        color: #1f2937;
+        line-height: 1.4;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      table { border-collapse: collapse; }
+      @@media screen {
+        html { background: #e5e7eb; }
+        body {
+          width: 210mm;
+          min-height: 297mm;
+          margin: 20px auto;
+          background: #fff;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+          border-radius: 2px;
+        }
+      }
+      @@media print {
+        /* Transparenter Hintergrund, damit das PdfSharp-Overlay (Briefpapier) durchscheint */
+        html, body {
+          background: transparent !important;
+          width: 210mm;
+          margin: 0;
+          padding: 0;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+      }
+    </style>
+</head>
+<body>
+    @RenderBody()
+</body>
+</html>

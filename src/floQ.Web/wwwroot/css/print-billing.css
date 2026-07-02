@@ -1,0 +1,171 @@
+/* Beleg-Print — A4-Dokument mit BillingLayoutItem-getriebenem Layout
+   (batOS-Preview.css als Vorlage, reduziert auf den Print-Teil). */
+
+/* ── A4-Seite ──────────────────────────────────────────────── */
+/* Pagination: die @page-Regeln (Folgeseiten-Top-Margin, :first) liegen in
+   BillingDocument.cshtml im Body — _LayoutPrint setzt @page margin:0 NACH
+   der Styles-Section und würde sie hier in der CSS-Datei überschreiben. */
+.doc-page {
+    position: relative;
+    width: 794px;
+    margin: 0 auto;
+    background: #ffffff;
+    color: #1d1d1f;
+    line-height: 1.5;
+}
+
+/* Nur Bildschirm-Vorschau: fixe A4-Karte. Im Print/PDF wächst die Seite mit
+   dem Inhalt und Chromium paginiert (kein overflow-Clipping!). */
+@media screen {
+    .doc-page {
+        height: 1123px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+        border-radius: 2px;
+    }
+}
+
+/* ── Positionierte Blöcke (Kopfbereich Seite 1) ────────────── */
+.doc-block {
+    position: absolute;
+    z-index: 1;
+}
+
+/* ── Fließ-Container (Tabelle + Summen + Texte) ───────────────
+   Layout-Koordinaten kommen als Paddings (FlowStyle in BillingDocument.cshtml),
+   der Inhalt fließt und bricht sauber über Seiten. */
+.doc-flow {
+    position: relative;
+    z-index: 1;
+}
+
+/* Tabellenkopf auf jeder Seite wiederholen */
+.doc-flow .doc-items-table thead {
+    display: table-header-group;
+}
+
+/* Hauptposition + ihre Rabattzeilen bleiben beim Umbruch zusammen */
+.doc-flow tbody.entry-group {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+/* Gruppen-tbodys: keine Abschlusslinie pro Gruppe (die zieht .doc-totals) */
+.doc-flow .doc-items-table tbody.entry-group tr:last-child td {
+    border-bottom: 0;
+}
+
+/* Volle Breite nutzen: erste/letzte Spalte bündig an den Block-Rändern */
+.doc-flow .doc-items-table td:first-child,
+.doc-flow .doc-items-table th:first-child {
+    padding-left: 0;
+}
+.doc-flow .doc-items-table td:last-child,
+.doc-flow .doc-items-table th:last-child {
+    padding-right: 0;
+}
+.doc-flow .col-pos { width: 7%; }
+.doc-flow .col-desc { width: 42%; }
+.doc-flow .col-qty { width: 14%; }
+.doc-flow .col-price { width: 14%; }
+.doc-flow .col-total { width: 15%; }
+
+/* Rabattzeile: einzeilig, kompakt an die Hauptzeile geschoben */
+.doc-flow .discount-row td {
+    padding-top: 0;
+    padding-bottom: 5px;
+}
+
+/* Abschluss-Sektion (Texte): atomar — bricht als Ganzes um */
+.doc-flow .doc-closing {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+/* Summenblock: Abschlusslinie + nie über Seiten splitten */
+.doc-flow .doc-totals {
+    border-top: 1px solid #1d1d1f;
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+.doc-flow .doc-totals-row {
+    padding: 2px 0;
+}
+
+/* ── Meta-Tabelle (rechts) ─────────────────────────────────── */
+.meta-label {
+    color: #86868b;
+    padding-right: 12px;
+    text-align: left;
+}
+
+.meta-value {
+    text-align: right;
+    font-weight: 500;
+}
+
+/* ── Positionstabelle ──────────────────────────────────────── */
+.doc-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 8px;
+}
+
+.doc-items-table thead th {
+    font-weight: 500;
+    border-bottom: 1px solid #1d1d1f;
+    padding: 4px 8px 6px;
+}
+
+.doc-items-table tbody td {
+    padding: 6px 8px;
+    vertical-align: top;
+}
+
+.doc-items-table tbody tr:last-child td {
+    border-bottom: 1px solid #1d1d1f;
+}
+
+.col-pos { width: 6%; }
+.col-desc { width: 40%; }
+.col-qty { width: 18%; text-align: right; }
+.col-price { width: 18%; text-align: right; }
+.col-total { width: 18%; text-align: right; }
+
+.doc-items-table thead .col-qty,
+.doc-items-table thead .col-price,
+.doc-items-table thead .col-total { text-align: right; }
+
+.doc-items-table thead .col-pos,
+.doc-items-table thead .col-desc { text-align: left; }
+
+/* ── Rabatt-Subzeilen ─────────────────────────────────────── */
+.doc-items-table .discount-row td {
+    font-size: 0.85em;
+    color: #6e6e73;
+    padding-top: 1px;
+    padding-bottom: 1px;
+}
+
+.discount-prefix {
+    color: #86868b;
+    margin-right: 3px;
+}
+
+.discount-desc {
+    padding-left: 1.2em;
+}
+
+/* ── Summenblock ───────────────────────────────────────────── */
+.doc-totals-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 8px;
+}
+
+.doc-totals-gross {
+    font-weight: 700;
+    border-top: 1px solid #1d1d1f;
+    padding-top: 4px;
+    margin-top: 2px;
+}
