@@ -41,6 +41,8 @@ public class AppDbContext(
 
     // Deployment-Schicht (Singleton-State, AC-Cache)
     public DbSet<PlatformState> PlatformStates => Set<PlatformState>();
+    public DbSet<EnabledModule> EnabledModules => Set<EnabledModule>();
+    public DbSet<PlatformAsset> PlatformAssets => Set<PlatformAsset>();
 
     // Beleg-Domäne (TPH: eine Documents-Tabelle für alle 5 Subtypen)
     public DbSet<Document> Documents => Set<Document>();
@@ -219,6 +221,20 @@ public class AppDbContext(
             b.HasKey(s => s.Id);
             // Singleton-Row: Id wird explizit gesetzt (SingletonId=1), nie generiert.
             b.Property(s => s.Id).ValueGeneratedNever();
+        });
+
+        modelBuilder.Entity<EnabledModule>(b =>
+        {
+            b.HasKey(e => e.Key);
+            b.Property(e => e.Key).HasMaxLength(64);
+        });
+
+        modelBuilder.Entity<PlatformAsset>(b =>
+        {
+            b.HasKey(a => a.Key);
+            b.Property(a => a.Key).HasMaxLength(64);
+            b.Property(a => a.ETag).HasMaxLength(128);
+            b.Property(a => a.ContentType).HasMaxLength(128);
         });
 
         // ---- Auto-Configuration für jede TenantScopedEntity ----

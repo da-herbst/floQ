@@ -25,9 +25,12 @@ public class AdminCenterOptions
     public string BaseUrl { get; set; } = "https://admin.batos.at";
     public string PlatformKey { get; set; } = "";
 
-    /// <summary>Instanz-Identifier im AC. floQ ist EIN Deployment mit vielen
-    /// Mandanten — ShortName identifiziert das Deployment ("floq"),
-    /// nicht den einzelnen floQ-Kunden.</summary>
+    /// <summary>Instanz-Identifier im AC — der stabile Mandanten-Schlüssel
+    /// (lowercase, ≤ 32, unique innerhalb der Software "floq"). Im AC-Modell
+    /// läuft jeder floQ-Mandant als eigene Instanz (eigener Stack, eigene
+    /// Domain); ShortName/Host/DisplayName kommen per ENV aus dem Deploy des
+    /// jeweiligen Mandanten. Das aktuelle Single-Deployment floq.at ist die
+    /// Instanz "floq" (Default aus appsettings).</summary>
     public string ShortName { get; set; } = "";
 
     public string Host { get; set; } = "";
